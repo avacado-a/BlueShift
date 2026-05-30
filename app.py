@@ -28,6 +28,47 @@ CACHE_PATH = os.path.join(DIR_PATH, "results_cache.json")
 LOCK_PATH = os.path.join(DIR_PATH, "update.lock")
 CSS_PATH = os.path.join(DIR_PATH, "assets", "style.css")
 
+import threading
+from datetime import timedelta
+
+# Background scheduler to run update pipeline at midnight
+@st.cache_resource
+def start_scheduler():
+    def scheduler_loop():
+        # Delay startup slightly to let Streamlit server initialize fully
+        time.sleep(10)
+        while True:
+            try:
+                now = datetime.now()
+                next_run = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+                sleep_seconds = (next_run - now).total_seconds()
+                
+                print(f"[Scheduler] Next run scheduled at midnight ({next_run}). Sleeping for {sleep_seconds:.1f} seconds...")
+                
+                # Sleep in increments of 60s to allow thread responsiveness
+                slept = 0
+                while slept < sleep_seconds:
+                    time.sleep(min(60, sleep_seconds - slept))
+                    slept += 60
+                
+                print(f"[Scheduler] Midnight reached. Launching background update pipeline...")
+                from BlueShift.backend import update_queue
+                update_queue.update_pipeline()
+                
+                # Extra safety buffer to avoid multiple triggers at 00:00:00
+                time.sleep(60)
+            except Exception as e:
+                print(f"[Scheduler Error] Exception in background thread: {e}")
+                time.sleep(60)
+
+    thread = threading.Thread(target=scheduler_loop, daemon=True, name="BlueShiftScheduler")
+    thread.start()
+    return thread
+
+# Initialize scheduler singleton
+start_scheduler()
+
+
 # Load CSS
 if os.path.exists(CSS_PATH):
     with open(CSS_PATH, "r") as f:
