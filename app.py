@@ -37,14 +37,6 @@ def start_scheduler():
     def scheduler_loop():
         # Delay startup slightly to let Streamlit server initialize fully
         time.sleep(10)
-        
-        # Run pipeline once on startup
-        try:
-            print(f"[Scheduler] Running initial update pipeline on startup...")
-            from BlueShift.backend import update_queue
-            update_queue.update_pipeline()
-        except Exception as e:
-            print(f"[Scheduler Error] Initial update pipeline failed: {e}")
 
         while True:
             try:
@@ -547,13 +539,22 @@ elif data is None:
     st.html("""
         <div class="glass-container" style="text-align: center; padding: 40px;">
             <h3>👋 Welcome to BlueShift</h3>
-            <p>No cached research results were found. BlueShift requires an initial analysis queue run to inspect GDELT and Bluesky streams.</p>
-            <p>The system will automatically run model training and build the cache every night at midnight.</p>
-            <div style="margin-top: 20px;">
-                <span class="badge" style="background: rgba(243, 85, 136, 0.15); color: #f35588; border: 1px solid #f35588; padding: 10px 20px;">STATUS: NO CACHE</span>
-            </div>
+            <p>No cached research results were found. BlueShift requires an initial analysis run to inspect GDELT and Bluesky streams and train the forecasting models.</p>
+            <p>Click the button below to initialize the data ingestion and modeling pipeline. Once started, this page will update and show the modeling progress.</p>
         </div>
     """)
+    
+    if st.button("🚀 Initialize Data Ingestion & Model Training", use_container_width=True):
+        def run_initial_pipeline():
+            try:
+                from BlueShift.backend import update_queue
+                update_queue.update_pipeline()
+            except Exception as e:
+                print(f"[Initial Ingestion Error]: {e}")
+        
+        threading.Thread(target=run_initial_pipeline, daemon=True).start()
+        time.sleep(1.5) # Allow the thread a moment to start and write the lock file
+        st.rerun()
 
 else:
     # We have cached data! Let's display the grid of cards.
