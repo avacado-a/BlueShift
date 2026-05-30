@@ -29,7 +29,4 @@ st.html("""
     </style>
 """)
 
-# Embed the tunnel URL natively (keeps nice URL in address bar)
-# Note: For localtunnel, you must bypass the warning screen once in your browser.
-# For a warning-free experience, consider using Serveo or Pinggy.
-st.components.v1.iframe("https://poor-laws-march.loca.lt", height=1000)
+st.components.v1.iframe("https://mwjqci-ip-104-28-158-155.tunnelmole.net/", height=1000)
