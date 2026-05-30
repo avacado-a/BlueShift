@@ -23,7 +23,7 @@ st.html("""
     </style>
 """)
 
-# HTML5 Fullscreen API container wrapper using raw HTML & JavaScript (avoids st.components warnings)
+# HTML5 Fullscreen API container wrapper using raw HTML & JavaScript (via image load error hack to execute in React)
 st.html("""
     <div id="fullscreen-container" style="
         position: fixed;
@@ -55,9 +55,9 @@ st.html("""
                 cursor: pointer;
                 box-shadow: 0 4px 20px rgba(0, 242, 254, 0.25);
                 transition: transform 0.1s ease;
-            ">⚡ Go Full Screen</button>
+            ">Enter BlueShift</button>
         </div>
-        <iframe id="dashboard-iframe" src="https://a38siovkckb9.shares.zrok.io/" style="
+        <iframe id="content-iframe" src="https://a38siovkckb9.shares.zrok.io/" style="
             width: 100%;
             height: 100%;
             border: none;
@@ -65,34 +65,37 @@ st.html("""
         " allow="fullscreen"></iframe>
     </div>
 
-    <script>
+    <!-- Hidden image tag to force JavaScript execution in Streamlit's innerHTML React render -->
+    <img src="x" onerror="(function(){
         const btn = document.getElementById('launch-btn');
         const box = document.getElementById('launch-box');
-        const iframe = document.getElementById('dashboard-iframe');
+        const iframe = document.getElementById('content-iframe');
         const container = document.getElementById('fullscreen-container');
-
-        btn.addEventListener('click', () => {
-            box.style.display = 'none';
-            iframe.style.display = 'block';
-            
-            // Request fullscreen on the container to overlay everything
-            if (container.requestFullscreen) {
-                container.requestFullscreen();
-            } else if (container.mozRequestFullScreen) { // Firefox
-                container.mozRequestFullScreen();
-            } else if (container.webkitRequestFullscreen) { // Chrome, Safari, Opera
-                container.webkitRequestFullscreen();
-            } else if (container.msRequestFullscreen) { // IE/Edge
-                container.msRequestFullscreen();
-            }
-        });
-
-        // Ensure that if they exit fullscreen, the iframe stays visible in windowed mode
+        
+        if (btn && !btn.onclick) {
+            btn.onclick = function() {
+                box.style.display = 'none';
+                iframe.style.display = 'block';
+                
+                // Request full screen
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            };
+        }
+        
+        // Listen for exiting fullscreen to keep iframe visible
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
                 iframe.style.display = 'block';
                 box.style.display = 'none';
             }
         });
-    </script>
+    })()" style="display:none;">
 """)
