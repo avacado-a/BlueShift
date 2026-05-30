@@ -1,38 +1,35 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Redirecting to BlueShift...",
+    page_title="BlueShift Gateway",
     page_icon="🌊",
-    layout="centered"
+    layout="wide"
 )
 
-st.markdown("""
-    <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
-        <h2 style="color: #00f2fe;">🌊 Redirecting to BlueShift...</h2>
-        <p style="color: #9ca3af; font-size: 1.1rem;">
-            We are redirecting you to the secure local tunnel hosting the dashboard.
-        </p>
-        <p style="color: #6b7280; font-size: 0.9rem;">
-            If you are not redirected automatically within a few seconds, click the link below:
-        </p>
-        <a href="https://poor-laws-march.loca.lt" target="_top" style="
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #00f2fe;
-            color: #0b0f19;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 5px;
-        ">Go to Dashboard</a>
-    </div>
-""", unsafe_allow_html=True)
-
-# Use window.top.location.href to break out of Streamlit Cloud's parent sandboxed iframe and redirect
+# Render a modern, styled control header at the top
 st.html("""
-    <script>
-        setTimeout(function() {
-            window.top.location.href = "https://poor-laws-march.loca.lt";
-        }, 1000);
-    </script>
+    <div style="text-align: center; margin-bottom: 25px; font-family: sans-serif; padding: 25px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);">
+        <h1 style="color: #00f2fe; margin-bottom: 8px; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em;">🌊 BlueShift Gateway</h1>
+        <p style="color: #9ca3af; margin: 0 auto 15px auto; max-width: 650px; font-size: 1rem; line-height: 1.6;">
+            Welcome to the BlueShift trend forecasting system. The backend ML pipeline and database are running locally. You can use the embedded portal below or launch the dashboard directly in a new tab.
+        </p>
+        <div>
+            <a href="https://poor-laws-march.loca.lt" target="_blank" style="
+                display: inline-block;
+                padding: 12px 28px;
+                background: #00f2fe;
+                color: #0b0f19;
+                text-decoration: none;
+                font-weight: bold;
+                font-size: 1.05rem;
+                border-radius: 6px;
+                box-shadow: 0 4px 20px rgba(0, 242, 254, 0.25);
+                transition: all 0.2s ease-in-out;
+            ">⚡ Launch Dashboard in New Tab</a>
+        </div>
+    </div>
 """)
+
+# Native Streamlit iframe container for embedding
+st.markdown("### 🖥️ Embedded Live Preview")
+st.components.v1.iframe("https://poor-laws-march.loca.lt", height=950, scrolling=True)
