@@ -58,4 +58,4 @@ The `/docs` directory is configured to host the static version of BlueShift on *
 3. Under **Build and deployment**, select **Deploy from a branch**.
 4. Choose the `main` branch and the `/docs` folder, then click save.
 
-The static page provides an interactive demonstration of the M-PULSE paper's research findings (FIRST Robotics, NVIDIA Blackwell, and The Middle East) using client-side Chart.js charts, the full research paper viewer, and a feedback submission log.
+The static page provides an interactive demonstration of the M-PULSE paper's research findings using client-side Chart.js charts, the full research paper viewer, and a feedback submission log.
