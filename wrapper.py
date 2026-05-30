@@ -1,35 +1,38 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="BlueShift",
+    page_title="Redirecting to BlueShift...",
     page_icon="🌊",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
-# Strip all Streamlit headers, footers, and margins to allow full screen object/embed rendering
-st.html("""
-    <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
-        .stApp {margin: 0; padding: 0; overflow: hidden; background: #0b0f19;}
-        div.block-container {padding: 0; max-width: 100%; margin: 0;}
-        .embed-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            border: none;
-            z-index: 999999;
-        }
-    </style>
-""")
+st.markdown("""
+    <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
+        <h2 style="color: #00f2fe;">🌊 Redirecting to BlueShift...</h2>
+        <p style="color: #9ca3af; font-size: 1.1rem;">
+            We are redirecting you to the secure local tunnel hosting the dashboard.
+        </p>
+        <p style="color: #6b7280; font-size: 0.9rem;">
+            If you are not redirected automatically within a few seconds, click the link below:
+        </p>
+        <a href="https://poor-laws-march.loca.lt" target="_top" style="
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #00f2fe;
+            color: #0b0f19;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+        ">Go to Dashboard</a>
+    </div>
+""", unsafe_allow_html=True)
 
-# Render using HTML5 <object> and <embed> tags to wrap the localtunnel URL (bypassing <iframe> filters)
+# Use window.top.location.href to break out of Streamlit Cloud's parent sandboxed iframe and redirect
 st.html("""
-    <object class="embed-container" data="https://poor-laws-march.loca.lt">
-        <embed class="embed-container" src="https://poor-laws-march.loca.lt"></embed>
-    </object>
+    <script>
+        setTimeout(function() {
+            window.top.location.href = "https://poor-laws-march.loca.lt";
+        }, 1000);
+    </script>
 """)
