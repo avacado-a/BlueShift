@@ -19,6 +19,24 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Force fullscreen layout, remove all blank space margins, and fix header cutting off
+st.html("""
+    <style>
+        /* Remove all default padding and margins from main container to make it truly fullscreen */
+        [data-testid="stAppViewContainer"], [data-testid="stMain"], .main, .block-container, [data-testid="stVerticalBlock"] {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+        }
+        
+        /* Adjust header so it doesn't cut off the top menu but stays out of the way */
+        header[data-testid="stHeader"] {
+            background: transparent !important;
+        }
+    </style>
+""")
+
 # Resolve paths
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_PATH = os.path.dirname(DIR_PATH)
@@ -125,7 +143,7 @@ def render_research_page():
                         <h4 style="color: #ffffff; margin: 0;">Topic Structure Rules All</h4>
                     </div>
                     <p style="color: #9ca3af; font-size: 0.9rem; line-height: 1.6;">
-                        Predictability is dictated by the inherent nature of a topic. Highly objective, factual topics produce the lowest model errors, while politically polarized or heavily debated topics exhibit high volatility and diverge faster.
+                        Predictability is dictated by the inherent nature of a topic. Objective and agreed-on topics (e.g. FIRST Robotics Competition) produce the lowest model errors, while politically polarized topics (e.g. The Middle East) exhibit high volatility and diverge faster.
                     </p>
                 </div>
                 <!-- Discovery 2 -->
