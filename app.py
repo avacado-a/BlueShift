@@ -37,6 +37,15 @@ def start_scheduler():
     def scheduler_loop():
         # Delay startup slightly to let Streamlit server initialize fully
         time.sleep(10)
+        
+        # Run pipeline once on startup
+        try:
+            print(f"[Scheduler] Running initial update pipeline on startup...")
+            from BlueShift.backend import update_queue
+            update_queue.update_pipeline()
+        except Exception as e:
+            print(f"[Scheduler Error] Initial update pipeline failed: {e}")
+
         while True:
             try:
                 now = datetime.now()
