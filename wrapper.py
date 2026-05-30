@@ -126,15 +126,7 @@ else:
         </style>
     """)
     
-    # Embed the local app tunnel native wrapper using raw HTML to ensure sandbox attributes are applied
-    st.html("""
-        <iframe 
-            src="https://a38siovkckb9.shares.zrok.io/" 
-            style="width: 100vw; height: 100vh; border: none; margin: 0; padding: 0;"
-            sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts allow-fullscreen" 
-            allow="fullscreen"
-            allowfullscreen>
-        </iframe>
-    """)
+    # Embed the local app tunnel native wrapper using st.iframe
+    st.iframe("https://a38siovkckb9.shares.zrok.io/", height=1000)
 
 
