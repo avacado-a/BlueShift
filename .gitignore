@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+ENV/
+env/
+
+# Package managers
+node_modules/
+package-lock.json
+
+# Databases and model checkpoints
+backend/blueshift.db
+backend/blueshift.db-journal
+backend/blueshift.db-shm
+backend/blueshift.db-wal
+backend/current_context.model*
+update.lock
+
+# Local configurations and caches
+.env
+results_cache.json
+feedback_submissions.json
+
+# Streamlit
+.streamlit/
+
+# OS-specific
+Thumbs.db
+Desktop.ini
+.DS_Store
