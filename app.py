@@ -28,48 +28,6 @@ CACHE_PATH = os.path.join(DIR_PATH, "results_cache.json")
 LOCK_PATH = os.path.join(DIR_PATH, "update.lock")
 CSS_PATH = os.path.join(DIR_PATH, "assets", "style.css")
 
-import threading
-from datetime import timedelta
-
-# Background scheduler to run update pipeline at midnight
-@st.cache_resource
-def start_scheduler():
-    def scheduler_loop():
-        # Delay startup slightly to let Streamlit server initialize fully
-        time.sleep(10)
-
-        while True:
-            try:
-                now = datetime.now()
-                next_run = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
-                sleep_seconds = (next_run - now).total_seconds()
-                
-                print(f"[Scheduler] Next run scheduled at midnight ({next_run}). Sleeping for {sleep_seconds:.1f} seconds...")
-                
-                # Sleep in increments of 60s to allow thread responsiveness
-                slept = 0
-                while slept < sleep_seconds:
-                    time.sleep(min(60, sleep_seconds - slept))
-                    slept += 60
-                
-                print(f"[Scheduler] Midnight reached. Launching background update pipeline...")
-                from BlueShift.backend import update_queue
-                update_queue.update_pipeline()
-                
-                # Extra safety buffer to avoid multiple triggers at 00:00:00
-                time.sleep(60)
-            except Exception as e:
-                print(f"[Scheduler Error] Exception in background thread: {e}")
-                time.sleep(60)
-
-    thread = threading.Thread(target=scheduler_loop, daemon=True, name="BlueShiftScheduler")
-    thread.start()
-    return thread
-
-# Initialize scheduler singleton
-start_scheduler()
-
-
 # Load CSS
 if os.path.exists(CSS_PATH):
     with open(CSS_PATH, "r") as f:
@@ -539,22 +497,13 @@ elif data is None:
     st.html("""
         <div class="glass-container" style="text-align: center; padding: 40px;">
             <h3>👋 Welcome to BlueShift</h3>
-            <p>No cached research results were found. BlueShift requires an initial analysis run to inspect GDELT and Bluesky streams and train the forecasting models.</p>
-            <p>Click the button below to initialize the data ingestion and modeling pipeline. Once started, this page will update and show the modeling progress.</p>
+            <p>No cached research results were found. BlueShift requires an initial analysis queue run to inspect GDELT and Bluesky streams.</p>
+            <p>The system will automatically run model training and build the cache every night at midnight.</p>
+            <div style="margin-top: 20px;">
+                <span class="badge" style="background: rgba(243, 85, 136, 0.15); color: #f35588; border: 1px solid #f35588; padding: 10px 20px;">STATUS: NO CACHE</span>
+            </div>
         </div>
     """)
-    
-    if st.button("🚀 Initialize Data Ingestion & Model Training", use_container_width=True):
-        def run_initial_pipeline():
-            try:
-                from BlueShift.backend import update_queue
-                update_queue.update_pipeline()
-            except Exception as e:
-                print(f"[Initial Ingestion Error]: {e}")
-        
-        threading.Thread(target=run_initial_pipeline, daemon=True).start()
-        time.sleep(1.5) # Allow the thread a moment to start and write the lock file
-        st.rerun()
 
 else:
     # We have cached data! Let's display the grid of cards.
