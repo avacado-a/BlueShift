@@ -2,11 +2,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Main Streamlit page margins and background */
-.block-container {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-    max-width: 95% !important;
+/* 1. Nuke the native Streamlit header (removes the "Deploy" bar gap) */
+[data-testid="stHeader"] {
+    display: none !important;
+    height: 0px !important;
+    padding: 0px !important;
+}
+
+/* 2. The Ultimate Padding Killer (Updated for the stMainBlockContainer rename) */
+[data-testid="stMainBlockContainer"] {
+    padding: 0rem !important;
+    margin: 0rem !important;
+    max-width: 100% !important;
+}
+
+[data-testid="stMain"] {
+    padding: 0rem !important;
+}
+
+/* 3. Strip any sneaky padding from the outer app wrapper */
+[data-testid="stAppViewContainer"], 
+[data-testid="stApp"] {
+    padding: 0rem !important;
+    margin: 0rem !important;
 }
 
 /* Glassmorphism containers */
@@ -501,4 +519,3 @@ a.topic-card {
     color: #00f2fe !important;
     padding-left: 4px;
 }
-
