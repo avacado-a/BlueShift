@@ -54,8 +54,14 @@ if not st.session_state.entered:
                 margin: 0;
             }
             /* Premium button styling to match design system */
+            div.stButton {
+                display: flex !important;
+                justify-content: center !important;
+            }
             div.stButton > button {
-                width: 100% !important;
+                width: auto !important;
+                min-width: 220px !important;
+                margin: 0 auto !important;
                 padding: 14px 40px !important;
                 background: #00f2fe !important;
                 color: #0b0f19 !important;
@@ -116,17 +122,17 @@ else:
                 max-width: 100vw !important;
                 max-height: 100vh !important;
             }
-            iframe {
-                width: 100vw !important;
-                height: 100vh !important;
-                border: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
         </style>
     """)
     
-    # Embed the local app tunnel native wrapper using st.iframe
-    st.iframe("https://a38siovkckb9.shares.zrok.io/", height=1000)
+    # Embed the local app tunnel native wrapper using custom HTML iframe for proper fullscreen support
+    st.html("""
+        <iframe src="https://a38siovkckb9.shares.zrok.io/" 
+                style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 999999;" 
+                sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts allow-fullscreen" 
+                allow="fullscreen" 
+                allowfullscreen>
+        </iframe>
+    """)
 
 
