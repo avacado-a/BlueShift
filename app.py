@@ -125,7 +125,7 @@ def render_research_page():
                         <h4 style="color: #ffffff; margin: 0;">Topic Structure Rules All</h4>
                     </div>
                     <p style="color: #9ca3af; font-size: 0.9rem; line-height: 1.6;">
-                        Predictability is dictated by the inherent nature of a topic. Highly objective, factual topics produce the lowest model errors, while politically polarized or heavily debated topics exhibit high volatility and diverge faster.
+                        Predictability is dictated by the inherent nature of a topic. Objective and agreed-on topics (e.g. FIRST Robotics Competition) produce the lowest model errors, while politically polarized topics (e.g. The Middle East) exhibit high volatility and diverge faster.
                     </p>
                 </div>
                 <!-- Discovery 2 -->
