@@ -127,7 +127,7 @@ else:
     
     # Embed the local app tunnel native wrapper using custom HTML iframe for proper fullscreen support
     st.html("""
-        <iframe src="https://a38siovkckb9.shares.zrok.io/" 
+        <iframe src="https://g0eglhcqa0pt.shares.zrok.io/" 
                 style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 999999;" 
                 sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts allow-fullscreen" 
                 allow="fullscreen" 
