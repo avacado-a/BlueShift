@@ -53,12 +53,15 @@ if not st.session_state.entered:
                 line-height: 1.6;
                 margin: 0;
             }
-            /* Custom button styling centered inside the card */
-            .custom-gateway-btn {
-                display: inline-block !important;
+            /* Premium button styling to match design system */
+            div.stButton {
+                display: flex !important;
+                justify-content: center !important;
+            }
+            div.stButton > button {
                 width: auto !important;
                 min-width: 220px !important;
-                margin: 25px auto 0 auto !important;
+                margin: 0 auto !important;
                 padding: 14px 40px !important;
                 background: #00f2fe !important;
                 color: #0b0f19 !important;
@@ -69,42 +72,30 @@ if not st.session_state.entered:
                 cursor: pointer !important;
                 box-shadow: 0 4px 20px rgba(0, 242, 254, 0.25) !important;
                 transition: all 0.2s ease !important;
-                text-decoration: none !important;
-                text-align: center !important;
             }
-            .custom-gateway-btn:hover {
+            div.stButton > button:hover {
                 background: #00e0eb !important;
                 color: #0b0f19 !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 6px 25px rgba(0, 242, 254, 0.35) !important;
             }
-            .custom-gateway-btn:active {
+            div.stButton > button:active {
                 transform: translateY(0) !important;
-            }
-            /* Hide the real native Streamlit button */
-            div.stButton {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0 !important;
-                width: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
             }
         </style>
     """)
     
-    # Render gateway card with custom centered button inside
+    # Render gateway card
     st.html("""
         <div class="gateway-card">
             <div class="gateway-title">🌊 BlueShift Gateway</div>
             <p class="gateway-desc">
                 The forecasting models are running locally. Click below to launch the dashboard in fullscreen mode, hiding all Streamlit headers and side panels.
             </p>
-            <button class="custom-gateway-btn" onclick="(window.parent.document.querySelector('div.stButton button') || document.querySelector('div.stButton button')).click()">Enter BlueShift</button>
         </div>
     """)
     
-    # Standard Streamlit button (hidden, triggered programmatically)
+    # Standard Streamlit button, which triggers session state update and rerun when clicked
     if st.button("Enter BlueShift"):
         st.session_state.entered = True
         st.rerun()
