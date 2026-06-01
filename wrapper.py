@@ -14,7 +14,7 @@ st.html("""
     <style>
         header, footer, #MainMenu, [data-testid="stHeader"], [data-testid="stDecoration"], [data-testid="stToolbar"] {
             display: none !important;
-            visibility: hidden !important;
+            /* visibility: hidden !important; */
             height: 0 !important;
             width: 0 !important;
         }
