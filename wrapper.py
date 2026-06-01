@@ -1,15 +1,7 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
-st.set_page_config(
-    page_title="BlueShift",
-    page_icon="🌊",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# Initialize session state for entry
-
-# Aggressive CSS to hide Streamlit UI and stretch the iframe to fill 100% of screen
+st.set_page_config(layout="wide")
 st.html("""
     <style>
         header, footer, #MainMenu, [data-testid="stHeader"], [data-testid="stDecoration"], [data-testid="stToolbar"] {
@@ -32,15 +24,21 @@ st.html("""
         }
     </style>
 """)
+        
+# Hide Streamlit header, footer and adjust margins
+st.markdown("""
+    <style>
+        .reportview-container .main .block-container {
+            padding-top: 0rem;
+            padding-right: 0rem;
+            padding-left: 0rem;
+            padding-bottom: 0rem;
+        }
+        iframe {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# Embed the local app tunnel native wrapper using custom HTML iframe for proper fullscreen support
-st.html("""
-    <iframe src="https://g0eglhcqa0pt.shares.zrok.io/">
-            style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 999999;" 
-            sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts allow-fullscreen" 
-            allow="fullscreen" 
-            allowfullscreen>
-    </iframe>
-""")
-
-
+components.iframe("https://g0eglhcqa0pt.shares.zrok.io/", height=1000)
