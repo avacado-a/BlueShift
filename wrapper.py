@@ -54,9 +54,16 @@ if not st.session_state.entered:
                 margin: 0;
             }
             /* Premium button styling to match design system */
+            div.element-container:has(div.stButton),
+            div[data-testid="stElementContainer"]:has(div.stButton) {
+                display: flex !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
             div.stButton {
                 display: flex !important;
                 justify-content: center !important;
+                width: 100% !important;
             }
             div.stButton > button {
                 width: auto !important;
