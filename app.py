@@ -37,10 +37,102 @@ else:
 
 def render_research_page():
     html_content = """
+        <style>
+            /* Flip Card CSS */
+            .flip-card {
+                background-color: transparent;
+                height: 250px;
+                perspective: 1000px;
+                cursor: pointer;
+            }
+            .flip-card-inner {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                transition: transform 0.6s;
+                transform-style: preserve-3d;
+            }
+            .flip-card:hover .flip-card-inner {
+                transform: rotateY(180deg);
+            }
+            .flip-card-front, .flip-card-back {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                backface-visibility: hidden;
+                border-radius: 12px;
+                padding: 22px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                box-sizing: border-box;
+            }
+            .flip-card-front {
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .flip-card-back {
+                background: rgba(0, 242, 254, 0.05);
+                border: 1px solid rgba(0, 242, 254, 0.3);
+                transform: rotateY(180deg);
+            }
+
+            /* Pipeline Stepper Hover */
+            .pipeline-step {
+                transition: all 0.3s ease;
+                overflow: hidden;
+                position: relative;
+            }
+            .pipeline-step::before {
+                content: '';
+                position: absolute;
+                top: 0; left: -100%; width: 100%; height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.1), transparent);
+                transition: left 0.5s ease;
+            }
+            .pipeline-step:hover::before {
+                left: 100%;
+            }
+            .pipeline-step:hover {
+                transform: translateY(-5px);
+                border-color: #00f2fe;
+                box-shadow: 0 5px 15px rgba(0, 242, 254, 0.15);
+            }
+            .pipeline-detail {
+                opacity: 0.4;
+                transition: opacity 0.3s ease;
+                filter: blur(2px);
+            }
+            .pipeline-step:hover .pipeline-detail {
+                opacity: 1;
+                filter: blur(0px);
+            }
+
+            /* VRAM Game CSS */
+            .btn-game {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: 0.2s;
+                font-weight: 600;
+            }
+            .btn-game:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            #vram-fill {
+                transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
+            }
+        </style>
+
         <div class="glass-container paper-layout" style="padding: 40px; max-width: 100%; box-sizing: border-box; margin: 0 auto;">
-            <!-- Interactive Header -->
+            
             <div class="paper-header" style="text-align: center; margin-bottom: 45px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 35px;">
-                <span class="badge" style="background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.25); margin-bottom: 12px;">M-PULSE METHODOLOGY</span>
+                <span class="badge" style="background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.25); margin-bottom: 12px; cursor: pointer;" title="Machine-Prediction Using Linguistic Semantic Embeddings">M-PULSE METHODOLOGY</span>
                 <h1 style="font-size: 2.4rem; font-weight: 800; color: #ffffff; line-height: 1.3; margin-bottom: 15px; letter-spacing: -0.02em;">
                     How M-PULSE Forecasts Media Trends
                 </h1>
@@ -50,129 +142,162 @@ def render_research_page():
                 </div>
             </div>
 
-            <!-- Problem vs Solution Row -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 45px;">
-                <div class="news-item" style="display: block; padding: 25px; background: rgba(243, 85, 136, 0.02); border: 1px solid rgba(243, 85, 136, 0.15); border-radius: 12px; height: auto;">
+                <div class="news-item" style="padding: 25px; background: rgba(243, 85, 136, 0.02); border: 1px solid rgba(243, 85, 136, 0.15); border-radius: 12px;">
                     <h3 style="color: #f35588; margin-bottom: 12px;">The Core Problem</h3>
                     <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6;">
-                        Standard Large Language Models (LLMs) are frozen in time, computationally massive, and treat all topics the same. This "one-size-fits-all" approach fails to account for structural differences between topics and requires thousands of dollars of server hardware.
+                        Standard Large Language Models (LLMs) are frozen in time, treat all topics identically, and require thousands of dollars in server hardware to run.
                     </p>
                 </div>
-                <div class="news-item" style="display: block; padding: 25px; background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.15); border-radius: 12px; height: auto;">
+                <div class="news-item" style="padding: 25px; background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.15); border-radius: 12px;">
                     <h3 style="color: #00f2fe; margin-bottom: 12px;">The M-PULSE Solution</h3>
                     <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6;">
-                        A novel, dual-stream conventional news and social media NLP framework. It builds localized, dynamic semantic embedding spaces on-the-fly and trains lightweight PyTorch LSTM forecasting models that can easily run on standard consumer computers.
+                        A dual-stream NLP framework that builds dynamic semantic spaces on-the-fly, using lightweight LSTMs that run on standard consumer computers.
                     </p>
                 </div>
             </div>
 
-            <!-- Interactive Stepper Pipeline -->
-            <div class="section-title" style="margin-top: 0;">Step-by-Step Forecasting Engine</div>
+            <div class="section-title" style="margin-top: 0; display: flex; align-items: center; justify-content: space-between;">
+                <span>Step-by-Step Forecasting Engine</span>
+                <span style="font-size: 0.75rem; color: #6b7280; font-weight: normal;">Hover over steps to decrypt</span>
+            </div>
+            
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 45px;">
-                <!-- Step 1 -->
-                <div class="news-item" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
+                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
                     <div>
                         <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">01</div>
                         <h4 style="color: #ffffff; margin-bottom: 8px;">Dual-Stream Ingest</h4>
-                        <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                            Ingests news timelines from <strong>GDELT</strong> and real-time social conversations from <strong>Bluesky</strong>.
-                        </p>
+                        <div class="pipeline-detail">
+                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
+                                Ingests news timelines from <strong>GDELT</strong> and real-time social conversations from <strong>Bluesky</strong>.
+                            </p>
+                        </div>
                     </div>
                     <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">PIPELINE ENTRY</span>
                 </div>
-                <!-- Step 2 -->
-                <div class="news-item" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
+                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
                     <div>
                         <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">02</div>
                         <h4 style="color: #ffffff; margin-bottom: 8px;">DBSCAN Filtering</h4>
-                        <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                            Uses a <strong>SentenceTransformer</strong> and <strong>DBSCAN Clustering</strong> to drop anomalies and strip extreme political bias.
-                        </p>
+                        <div class="pipeline-detail">
+                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
+                                Uses a <strong>SentenceTransformer</strong> and <strong>DBSCAN Clustering</strong> to drop anomalies and strip extreme political bias.
+                            </p>
+                        </div>
                     </div>
                     <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">BIAS MITIGATION</span>
                 </div>
-                <!-- Step 3 -->
-                <div class="news-item" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
+                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
                     <div>
                         <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">03</div>
                         <h4 style="color: #ffffff; margin-bottom: 8px;">Local Word2Vec</h4>
-                        <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                            Trains a custom, localized <strong>Word2Vec</strong> model on the cleaned corpus to extract high-context local semantic maps.
-                        </p>
+                        <div class="pipeline-detail">
+                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
+                                Trains a custom, localized <strong>Word2Vec</strong> model to extract high-context local semantic maps.
+                            </p>
+                        </div>
                     </div>
                     <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">CONTEXT BUILDING</span>
                 </div>
-                <!-- Step 4 -->
-                <div class="news-item" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
+                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
                     <div>
                         <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">04</div>
                         <h4 style="color: #ffffff; margin-bottom: 8px;">LSTM Prediction</h4>
-                        <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                            Fuses the latent vectors from news & social streams inside a <strong>PyTorch LSTM</strong> network to forecast volume.
-                        </p>
+                        <div class="pipeline-detail">
+                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
+                                Fuses the latent vectors from news & social streams inside a <strong>PyTorch LSTM</strong> network to forecast volume.
+                            </p>
+                        </div>
                     </div>
                     <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">DUAL-STREAM FORECAST</span>
                 </div>
             </div>
 
-            <!-- Key Discoveries -->
-            <div class="section-title">Core Research Discoveries</div>
+            <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
+                <span>Core Research Discoveries</span>
+                <span style="font-size: 0.75rem; color: #6b7280; font-weight: normal;">Flip cards to reveal findings</span>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 45px;">
-                <!-- Discovery 1 -->
-                <div class="news-item" style="display: block; padding: 22px; height: auto;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <span style="font-size: 1.25rem;">📊</span>
-                        <h4 style="color: #ffffff; margin: 0;">Topic Structure Rules All</h4>
+                
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <span style="font-size: 3rem; margin-bottom: 15px;">📊</span>
+                            <h4 style="color: #ffffff; margin: 0;">What drives predictability?</h4>
+                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 style="color: #00f2fe; margin-bottom: 10px;">Topic Structure Rules All</h4>
+                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
+                                Objective topics produce the lowest model errors. Politically polarized topics exhibit high volatility and diverge rapidly.
+                            </p>
+                        </div>
                     </div>
-                    <p style="color: #9ca3af; font-size: 0.9rem; line-height: 1.6;">
-                        Predictability is dictated by the inherent nature of a topic. Objective and agreed-on topics (e.g. FIRST Robotics Competition) produce the lowest model errors, while politically polarized topics (e.g. The Middle East) exhibit high volatility and diverge faster.
-                    </p>
                 </div>
-                <!-- Discovery 2 -->
-                <div class="news-item" style="display: block; padding: 22px; height: auto;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <span style="font-size: 1.25rem;">⚓</span>
-                        <h4 style="color: #ffffff; margin: 0;">The Anchoring Power of News</h4>
-                    </div>
-                    <p style="color: #9ca3af; font-size: 0.9rem; line-height: 1.6;">
-                        Fusing streams reduces forecasting error (MSE) across the board. In polarized spaces, isolated social media models fail entirely; introducing institutional news as a "dual-stream anchor" absorbs outlier shocks and stabilizes prediction curves.
-                    </p>
-                </div>
-                <!-- Discovery 3 -->
-                <div class="news-item" style="display: block; padding: 22px; height: auto;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <span style="font-size: 1.25rem;">⏱️</span>
-                        <h4 style="color: #ffffff; margin: 0;">The Cognitive Lag Window</h4>
-                    </div>
-                    <p style="color: #9ca3af; font-size: 0.9rem; line-height: 1.6;">
-                        Sentiment is a lagging rather than predictive indicator of interest. During breaking events, conversation volume spikes first. This is followed by a latency window while the public processes updates before sentiment values catch up and solidify.
-                    </p>
-                </div>
-            </div>
 
-            <!-- VRAM Ceiling Specs -->
-            <div class="glass-container" style="background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; text-align: center; margin-bottom: 20px;">
-                <h3 style="color: #00f2fe; margin-bottom: 10px;">Consumer Hardware Accessibility Benchmark</h3>
-                <p style="color: #9ca3af; font-size: 0.95rem; max-width: 700px; margin: 0 auto 20px auto; line-height: 1.6;">
-                    To ensure the technology remains democratized for high schoolers, students, and independent research institutions, M-PULSE enforces a strict operational memory ceiling.
-                </p>
-                <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 2.4rem; font-weight: 800; color: #00f2fe;">&lt; 6.0 GB</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">VRAM Limit Enforced</div>
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <span style="font-size: 3rem; margin-bottom: 15px;">⚓</span>
+                            <h4 style="color: #ffffff; margin: 0;">Social Media vs. Reality</h4>
+                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 style="color: #00f2fe; margin-bottom: 10px;">The Anchoring Power of News</h4>
+                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
+                                Isolated social media models fail entirely. Introducing institutional news as a "dual-stream anchor" absorbs outlier shocks and stabilizes predictions.
+                            </p>
+                        </div>
                     </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 2.4rem; font-weight: 800; color: #00f2fe;">100% CPU/GPU</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">Cross-Compatible</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 2.4rem; font-weight: 800; color: #00f2fe;">$0.00 / Run</div>
-                        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">Zero Cloud Overhead</div>
+                </div>
+
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <span style="font-size: 3rem; margin-bottom: 15px;">⏱️</span>
+                            <h4 style="color: #ffffff; margin: 0;">Do feelings predict trends?</h4>
+                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 style="color: #00f2fe; margin-bottom: 10px;">The Cognitive Lag Window</h4>
+                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
+                                Sentiment is a lagging indicator. Conversation volume spikes first, followed by a latency window while the public processes updates before sentiment catches up.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Source Link -->
+            <div class="glass-container" style="background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; margin-bottom: 20px; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="color: #00f2fe; margin-bottom: 10px;">Hardware Accessibility Benchmark</h3>
+                    <p style="color: #9ca3af; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">
+                        Run the simulation below to see how M-PULSE keeps research democratized by enforcing a strict operational memory ceiling.
+                    </p>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #9ca3af;">
+                        <span>System VRAM Utilization</span>
+                        <span id="vram-text">0.0 GB / 8.0 GB (Idle)</span>
+                    </div>
+                    
+                    <div style="width: 100%; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
+                        <div id="vram-fill" style="width: 0%; height: 100%; background: #6b7280;"></div>
+                    </div>
+                    
+                    <div id="system-status" style="text-align: center; height: 30px; font-weight: bold; color: #6b7280; margin-bottom: 15px;">
+                        Ready for benchmark...
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 15px;">
+                        <button class="btn-game" onclick="runStandardLLM()">Run Standard LLM</button>
+                        <button class="btn-game" onclick="runMPulse()" style="border-color: #00f2fe; color: #00f2fe;">Run M-PULSE</button>
+                        <button class="btn-game" onclick="resetSim()" style="background: transparent; border: none; font-size: 0.8rem; text-decoration: underline;">Reset</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="text-align: center; margin-top: 35px;">
                 <p style="color: #6b7280; font-size: 0.9rem;">
                     Full M-PULSE source code, models, and research parameters are open source:
@@ -180,6 +305,47 @@ def render_research_page():
                 </p>
             </div>
         </div>
+
+        <script>
+            function runStandardLLM() {
+                const fill = document.getElementById('vram-fill');
+                const text = document.getElementById('vram-text');
+                const status = document.getElementById('system-status');
+                
+                fill.style.width = '100%';
+                fill.style.backgroundColor = '#f35588'; // Red/Pink
+                text.innerText = '80.0 GB / 8.0 GB (Critical)';
+                
+                status.style.color = '#f35588';
+                status.innerText = '💥 SYSTEM CRASH: Out of Memory! GPU requires A100 cluster.';
+            }
+
+            function runMPulse() {
+                const fill = document.getElementById('vram-fill');
+                const text = document.getElementById('vram-text');
+                const status = document.getElementById('system-status');
+                
+                fill.style.width = '70%'; // Under 6GB limit
+                fill.style.backgroundColor = '#00f2fe'; // Cyan
+                text.innerText = '5.8 GB / 8.0 GB (Stable)';
+                
+                status.style.color = '#00f2fe';
+                status.innerText = '🚀 SUCCESS: Model training locally. Zero cloud overhead.';
+            }
+
+            function resetSim() {
+                const fill = document.getElementById('vram-fill');
+                const text = document.getElementById('vram-text');
+                const status = document.getElementById('system-status');
+                
+                fill.style.width = '0%';
+                fill.style.backgroundColor = '#6b7280';
+                text.innerText = '0.0 GB / 8.0 GB (Idle)';
+                
+                status.style.color = '#6b7280';
+                status.innerText = 'Ready for benchmark...';
+            }
+        </script>
     """
     st.html(html_content)
 
