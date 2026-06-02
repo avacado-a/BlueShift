@@ -53,7 +53,7 @@ def patched_article_search(self, filters):
 gdeltdoc.GdeltDoc.article_search = patched_article_search
 
 # Global threading DB lock to serialize database writes/reads and PyTorch training
-db_lock = threading.Lock()
+db_lock = threading.RLock()
 
 # Set up logging
 logging.basicConfig(
