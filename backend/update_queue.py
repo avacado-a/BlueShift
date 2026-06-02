@@ -7,6 +7,7 @@ import time
 import logging
 import urllib.parse
 from datetime import datetime
+import threading
 
 # Add M-PULSE root (parent of BlueShift) to search path so package imports resolve
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,6 +28,32 @@ if os.path.exists(_env_path):
 from BlueShift.backend import database
 from BlueShift.backend import rss_pipeline
 from BlueShift.backend import mpulse_engine
+import gdeltdoc
+
+# Apply GDELT article_search monkey-patch immediately
+original_search = gdeltdoc.GdeltDoc.article_search
+
+def patched_article_search(self, filters):
+    retries = 60
+    while retries > 0:
+        try:
+            return original_search(self, filters)
+        except Exception as e:
+            err_name = type(e).__name__.lower()
+            err_msg = str(e).lower()
+            if 'ratelimit' in err_name or 'ratelimit' in err_msg or 'max retries' in err_msg or 'connection' in err_msg:
+                query_term = filters.query_params[0].strip() if getattr(filters, 'query_params', None) else 'unknown'
+                print(f"[GDELT PATCH] [{query_term}] Rate limit/connection issue hit: {err_name}. Sleeping 65 seconds before retry (retries left: {retries-1})...", flush=True)
+                time.sleep(65)
+                retries -= 1
+            else:
+                raise e
+    return original_search(self, filters)
+
+gdeltdoc.GdeltDoc.article_search = patched_article_search
+
+# Global threading DB lock to serialize database writes/reads and PyTorch training
+db_lock = threading.Lock()
 
 # Set up logging
 logging.basicConfig(
@@ -110,7 +137,6 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
     """
     Searches GDELT for the given topic over the past `days` days.
     Returns articles with naturally-distributed publication dates.
-    Respects GDELT's 1-request-per-5-seconds rate limit and backs off 65s on RateLimitError.
     """
     if not topic or not topic.strip():
         logger.warning("Empty search query provided. Skipping GDELT request.")
@@ -140,6 +166,8 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
     words = cleaned_query.split()
     # GDELT requires keywords to be at least 3 characters long
     filtered_words = [w for w in words if len(w) >= 3]
+    # Enforce maximum of 3 keywords to avoid over-restrictive queries
+    filtered_words = filtered_words[:3]
     query_keyword = ' '.join(filtered_words)
     logger.info(f"Sanitized GDELT query from '{topic}' to '{query_keyword}'")
     if not query_keyword or not query_keyword.strip():
@@ -154,29 +182,13 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
     filters.query_params.insert(0, f"{query_keyword} ")
 
     df = None
-    retries = 3
-    while retries > 0:
-        try:
-            logger.info(f"Sending GDELT request for '{query_keyword}' (retries left: {retries-1})...")
-            # Always sleep 5s between requests to be safe
-            time.sleep(5)
-            df = gd.article_search(filters)
-            break
-        except Exception as e:
-            import traceback
-            tb_str = traceback.format_exc()
-            logger.warning(f"GDELT exception occurred for '{query_keyword}':\n{tb_str}")
-            error_str = str(e).lower()
-            if "ratelimit" in error_str or "max retries" in error_str or "connection" in error_str or "ratelimit" in str(type(e).__name__).lower():
-                logger.warning(f"GDELT server cut off/rate limit for '{query_keyword}'. Backing off 65 seconds...")
-                time.sleep(65)
-            elif "timeout" in error_str:
-                logger.warning(f"GDELT request timed out for '{query_keyword}'. Retrying immediately...")
-                time.sleep(5)
-            else:
-                logger.error(f"GDELT query failed for '{query_keyword}': {e}")
-                break
-        retries -= 1
+    try:
+        logger.info(f"Sending GDELT request for '{query_keyword}'...")
+        # Always sleep 5s between requests to be safe
+        time.sleep(5)
+        df = gd.article_search(filters)
+    except Exception as e:
+        logger.error(f"GDELT query failed for '{query_keyword}': {e}", exc_info=True)
 
     # Restore original requests.get
     if hasattr(requests, 'get') and requests.get == patched_get:
@@ -219,7 +231,8 @@ def fetch_micro_chatter_bsky(topic: str, max_posts: int = 50, macro_articles: li
     bsky_pass = os.getenv('BSKY_APP_PASSWORD')
     
     if not bsky_handle or not bsky_pass:
-        return generate_mock_micro_chatter(topic, max_posts, macro_articles)
+        logger.warning(f"No Bluesky credentials configured. Skipping search for topic: '{topic}'")
+        return []
         
     logger.info(f"Logging into Bluesky as '{bsky_handle}' to search chatter for: '{topic}'")
     from atproto import Client
@@ -301,164 +314,28 @@ def fetch_micro_chatter_bsky(topic: str, max_posts: int = 50, macro_articles: li
                         
         return posts
     except Exception as e:
-        logger.error(f"Bluesky API error for topic {topic}: {e}. Falling back to mock data.")
-        return generate_mock_micro_chatter(topic, max_posts, macro_articles)
+        import traceback
+        tb_str = traceback.format_exc()
+        logger.error(f"Bluesky API error for topic {topic}:\n{tb_str}. Returning empty results (no fake data fallback).")
+        return []
 
-def generate_mock_micro_chatter(topic: str, count: int = 30, macro_articles: list = None) -> list:
-    """Generates synthetic micro posts spread over the last 60 days to align with macro articles for testing."""
-    import random
-    from datetime import timedelta
-    import pandas as pd
-    
-    logger.info(f"Generating {count} synthetic micro posts for '{topic}'...")
-    
-    opinions = [
-        "Fascinating developments in {topic}. This is going to change everything!",
-        "Not sure how to feel about {topic}. Seems overhyped.",
-        "Really looking forward to what they do next with {topic}.",
-        "Can someone explain why {topic} is trending? Seems irrelevant.",
-        "Honestly, {topic} is a game changer. Highly recommend checking it out.",
-        "I've been warning about the risks of {topic} for months now.",
-        "The impact of {topic} on our daily lives will be massive.",
-        "Is anyone else skeptical about the latest news on {topic}?",
-        "This update on {topic} is a major breakthrough.",
-        "Very interesting insights on {topic} in the latest reports.",
-        "So many discussions about {topic} today. What is the consensus?",
-        "I'm completely on board with {topic}. Excellent results so far.",
-        "Why is everyone talking about {topic}? Let's focus on real issues.",
-        "The technology behind {topic} is simply brilliant.",
-        "This is bad news for {topic}. A total disaster."
-    ]
-    
-    authors = ["tech_chatter", "news_curator", "market_watch", "opinion_builder", "social_pulse", "trend_seeker"]
-    posts = []
-    
-    macro_dates = []
-    if macro_articles:
-        for art in macro_articles:
-            if art.get('published'):
-                try:
-                    dt = pd.to_datetime(art['published'], errors='coerce')
-                    if pd.notnull(dt):
-                        # Convert to Python datetime and strip timezone info to make it naive
-                        pydt = dt.to_pydatetime()
-                        if pydt.tzinfo is not None:
-                            pydt = pydt.replace(tzinfo=None)
-                        macro_dates.append(pydt)
-                except Exception:
-                    pass
-                    
-    now = datetime.now()
-    for idx in range(count):
-        template = random.choice(opinions)
-        text = template.format(topic=topic)
-        author = random.choice(authors) + str(random.randint(100, 999))
-        
-        if macro_dates:
-            base_date = random.choice(macro_dates)
-            day_shift = random.choice([-2, -1, 0, 1, 2, 3])
-            hour_shift = random.randint(-12, 12)
-            post_time = base_date + timedelta(days=day_shift, hours=hour_shift)
-            if post_time > now:
-                post_time = now - timedelta(minutes=random.randint(5, 120))
-        else:
-            # Fallback: Spread posts over the last 60 days
-            days_ago = random.randint(0, 59)
-            hours_ago = random.randint(0, 23)
-            minutes_ago = random.randint(0, 59)
-            post_time = now - timedelta(days=days_ago, hours=hours_ago, minutes=minutes_ago)
-        
-        posts.append({
-            'author': author,
-            'clean_text': text,
-            'created_utc': post_time.timestamp(),
-            'source': 'bluesky_mock',
-            'type': 'post'
-        })
-    return posts
-
-def update_pipeline():
-    """Runs the full BlueShift background ingestion and ML evaluation queue."""
-    logger.info("Starting BlueShift background update queue...")
-    
-    lock_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'update.lock'))
-    logger.info(f"Creating lock file at: {lock_path}")
-    with open(lock_path, 'w') as f:
-        f.write(str(os.getpid()))
-        
+def process_single_topic(topic: str, query: str) -> dict:
+    """
+    Processes a single topic end-to-end: fetches macro & micro data,
+    runs the ML pipeline, and returns the result.
+    """
     try:
-        # 1. Initialize SQLite Database
-        database.init_db()
+        logger.info(f"[{topic}] === Starting Processing ===")
         
-        # Prune macro and micro stories older than 60 days to keep the database size bounded and clean
-        conn = database.get_connection()
-        cursor = conn.cursor()
+        # 3. Fetch Macro Data using the optimized GDELT query
+        macro_articles = fetch_macro_articles(query, max_articles=150)
         
-        # Get all macro records to parse and prune format-independently in Python
-        from datetime import datetime, timedelta
-        import pandas as pd
-        
-        cutoff_date = datetime.now() - timedelta(days=60)
-        cutoff_ts = cutoff_date.timestamp()
-        
-        cursor.execute("SELECT id, published FROM macro_data")
-        macro_rows = cursor.fetchall()
-        macro_ids_to_delete = []
-        for row_id, pub_str in macro_rows:
-            if pub_str:
-                try:
-                    dt = pd.to_datetime(pub_str, errors='coerce')
-                    if pd.notnull(dt) and dt.to_pydatetime().replace(tzinfo=None) < cutoff_date.replace(tzinfo=None):
-                        macro_ids_to_delete.append(row_id)
-                except Exception:
-                    pass
-        
-        if macro_ids_to_delete:
-            # Delete in chunks to be safe with SQL parameter limits (we don't expect > 999 deletes, but let's be safe)
-            for i in range(0, len(macro_ids_to_delete), 500):
-                chunk = macro_ids_to_delete[i:i+500]
-                cursor.execute(f"DELETE FROM macro_data WHERE id IN ({','.join(['?']*len(chunk))})", chunk)
+        # Stop this topic if macro ingestion fails (returns 0 articles)
+        if not macro_articles:
+            logger.warning(f"[{topic}] Skipping topic because GDELT returned 0 articles (or query failed).")
+            return None
             
-        cursor.execute("DELETE FROM micro_data WHERE created_utc < ?", (cutoff_ts,))
-        conn.commit()
-        conn.close()
-        logger.info(f"Pruned stories older than 60 days from the database. Deleted {len(macro_ids_to_delete)} stale macro articles.")
-        
-        # 2. Scrape Top Trending Topics from Google News RSS and refine them with the local LLM
-        topics_context = rss_pipeline.fetch_trending_topics_with_context(num_topics=8)
-        refined_entries = refine_topics_with_local_model(topics_context)
-        
-        # Map clean topics to their optimized GDELT queries
-        topic_queries = {entry['topic']: entry['query'] for entry in refined_entries}
-        trending_topics = list(topic_queries.keys())
-        
-        # Delete old stories of other topics that are no longer trending
-        conn = database.get_connection()
-        cursor = conn.cursor()
-        if trending_topics:
-            placeholders = ','.join('?' * len(trending_topics))
-            cursor.execute(f"DELETE FROM macro_data WHERE topic NOT IN ({placeholders})", tuple(trending_topics))
-            cursor.execute(f"DELETE FROM micro_data WHERE topic NOT IN ({placeholders})", tuple(trending_topics))
-            conn.commit()
-            logger.info("Deleted stories of non-trending topics from the database to keep it clean.")
-        conn.close()
-        
-        logger.info(f"Identified {len(trending_topics)} active trending topics: {trending_topics}")
-        
-        results = []
-        
-        for topic in trending_topics:
-            logger.info(f"=== Processing Topic: {topic} ===")
-            
-            # 3. Fetch Macro Data using the optimized GDELT query
-            gdelt_query = topic_queries.get(topic, topic)
-            macro_articles = fetch_macro_articles(gdelt_query, max_articles=150)
-            
-            # Stop this topic if macro ingestion fails (returns 0 articles)
-            if not macro_articles:
-                logger.warning(f"Skipping topic '{topic}' because GDELT returned 0 articles (or query failed).")
-                continue
-                
+        with db_lock:
             macro_inserted_count = 0
             for art in macro_articles:
                 inserted = database.insert_macro(
@@ -471,10 +348,12 @@ def update_pipeline():
                 )
                 if inserted:
                     macro_inserted_count += 1
-            logger.info(f"Inserted {macro_inserted_count} new macro articles into database.")
+            logger.info(f"[{topic}] Inserted {macro_inserted_count} new macro articles into database.")
             
-            # 4. Fetch Micro Data
-            micro_posts = fetch_micro_chatter_bsky(topic, max_posts=100, macro_articles=macro_articles)
+        # 4. Fetch Micro Data
+        micro_posts = fetch_micro_chatter_bsky(topic, max_posts=100, macro_articles=macro_articles)
+        
+        with db_lock:
             micro_inserted_count = 0
             for post in micro_posts:
                 inserted = database.insert_micro(
@@ -487,9 +366,10 @@ def update_pipeline():
                 )
                 if inserted:
                     micro_inserted_count += 1
-            logger.info(f"Inserted {micro_inserted_count} new micro posts into database.")
+            logger.info(f"[{topic}] Inserted {micro_inserted_count} new micro posts into database.")
             
-            # 5. Trigger ML Pipeline
+        # 5. Trigger ML Pipeline
+        with db_lock:
             try:
                 topic_result = mpulse_engine.run_ml_pipeline_for_topic(
                     topic=topic,
@@ -502,22 +382,113 @@ def update_pipeline():
                 elaboration = generate_elaboration(topic, topic_result, news_stories)
                 topic_result['elaboration'] = elaboration
                 
-                results.append(topic_result)
+                logger.info(f"[{topic}] Completed successfully.")
+                return topic_result
             except Exception as e:
-                logger.error(f"Error executing ML pipeline for topic '{topic}': {e}", exc_info=True)
-                
-        # 6. Save results cache
-        cache_data = {
-            "timestamp": datetime.now().isoformat(),
-            "topics": results
-        }
+                logger.error(f"[{topic}] Error executing ML pipeline: {e}", exc_info=True)
+                return None
+    except Exception as e:
+        logger.error(f"[{topic}] Unexpected error in thread processing: {e}", exc_info=True)
+        return None
+
+def update_pipeline():
+    """Runs the full BlueShift background ingestion and ML evaluation queue."""
+    logger.info("Starting BlueShift background update queue...")
+    
+    lock_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'update.lock'))
+    logger.info(f"Creating lock file at: {lock_path}")
+    with open(lock_path, 'w') as f:
+        f.write(str(os.getpid()))
         
-        logger.info(f"Saving final aggregated results to cache at: {CACHE_PATH}")
-        with open(CACHE_PATH, 'w', encoding='utf-8') as f:
-            json.dump(cache_data, f, indent=4, ensure_ascii=False)
+    try:
+        # 1. Initialize SQLite Database under lock
+        with db_lock:
+            database.init_db()
             
-        logger.info("BlueShift background update queue completed successfully.")
+            # Prune macro and micro stories older than 60 days to keep the database size bounded and clean
+            conn = database.get_connection()
+            cursor = conn.cursor()
+            
+            # Get all macro records to parse and prune format-independently in Python
+            from datetime import datetime, timedelta
+            import pandas as pd
+            
+            cutoff_date = datetime.now() - timedelta(days=60)
+            cutoff_ts = cutoff_date.timestamp()
+            
+            cursor.execute("SELECT id, published FROM macro_data")
+            macro_rows = cursor.fetchall()
+            macro_ids_to_delete = []
+            for row_id, pub_str in macro_rows:
+                if pub_str:
+                    try:
+                        dt = pd.to_datetime(pub_str, errors='coerce')
+                        if pd.notnull(dt) and dt.to_pydatetime().replace(tzinfo=None) < cutoff_date.replace(tzinfo=None):
+                            macro_ids_to_delete.append(row_id)
+                    except Exception:
+                        pass
+            
+            if macro_ids_to_delete:
+                # Delete in chunks to be safe with SQL parameter limits
+                for i in range(0, len(macro_ids_to_delete), 500):
+                    chunk = macro_ids_to_delete[i:i+500]
+                    cursor.execute(f"DELETE FROM macro_data WHERE id IN ({','.join(['?']*len(chunk))})", chunk)
+                
+            cursor.execute("DELETE FROM micro_data WHERE created_utc < ?", (cutoff_ts,))
+            conn.commit()
+            conn.close()
+            logger.info(f"Pruned stories older than 60 days from the database. Deleted {len(macro_ids_to_delete)} stale macro articles.")
         
+        # 2. Scrape Top Trending Topics from Google News RSS and refine them with the local LLM
+        topics_context = rss_pipeline.fetch_trending_topics_with_context(num_topics=8)
+        refined_entries = refine_topics_with_local_model(topics_context)
+        
+        # Map clean topics to their optimized GDELT queries
+        topic_queries = {entry['topic']: entry['query'] for entry in refined_entries}
+        trending_topics = list(topic_queries.keys())
+        
+        # Delete old stories of other topics that are no longer trending
+        with db_lock:
+            conn = database.get_connection()
+            cursor = conn.cursor()
+            if trending_topics:
+                placeholders = ','.join('?' * len(trending_topics))
+                cursor.execute(f"DELETE FROM macro_data WHERE topic NOT IN ({placeholders})", tuple(trending_topics))
+                cursor.execute(f"DELETE FROM micro_data WHERE topic NOT IN ({placeholders})", tuple(trending_topics))
+                conn.commit()
+                logger.info("Deleted stories of non-trending topics from the database to keep it clean.")
+            conn.close()
+        
+        logger.info(f"Identified {len(trending_topics)} active trending topics: {trending_topics}")
+        
+        results = []
+        
+        # Process topics in parallel using ThreadPoolExecutor
+        from concurrent.futures import ThreadPoolExecutor
+        logger.info(f"Spawning ThreadPoolExecutor to process {len(trending_topics)} topics in parallel...")
+        with ThreadPoolExecutor(max_workers=len(trending_topics)) as executor:
+            futures = [
+                executor.submit(process_single_topic, topic, topic_queries.get(topic, topic))
+                for topic in trending_topics
+            ]
+            for future in futures:
+                res = future.result()
+                if res is not None:
+                    results.append(res)
+                    
+        # 6. Save results cache under lock
+        with db_lock:
+            cache_data = {
+                "timestamp": datetime.now().isoformat(),
+                "topics": results
+            }
+            
+            logger.info(f"Saving final aggregated results to cache at: {CACHE_PATH}")
+            with open(CACHE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=4, ensure_ascii=False)
+                
+            logger.info("BlueShift background update queue completed successfully.")
+            
     finally:
         if os.path.exists(lock_path):
             try:
@@ -531,14 +502,15 @@ def fetch_news_stories(topic_name):
     if not os.path.exists(DB_PATH):
         return []
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT title, link, published, source FROM macro_data WHERE topic=? ORDER BY published DESC LIMIT 5",
-            (topic_name,)
-        )
-        rows = cursor.fetchall()
-        conn.close()
+        with db_lock:
+            conn = sqlite3.connect(DB_PATH, timeout=60.0)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT title, link, published, source FROM macro_data WHERE topic=? ORDER BY published DESC LIMIT 5",
+                (topic_name,)
+            )
+            rows = cursor.fetchall()
+            conn.close()
         return [{"title": r[0], "link": r[1], "published": r[2], "source": r[3]} for r in rows]
     except Exception as e:
         logger.error(f"Failed to fetch news stories for topic '{topic_name}' in update_queue: {e}")

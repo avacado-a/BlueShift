@@ -8,7 +8,7 @@ DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'blueshift.db'
 
 def get_connection():
     """Returns a connection to the SQLite database."""
-    return sqlite3.connect(DB_PATH)
+    return sqlite3.connect(DB_PATH, timeout=60.0)
 
 def init_db():
     """Initializes the database schema if it doesn't already exist."""
@@ -64,10 +64,10 @@ def insert_feedback(name: str, role: str, rating: int, comments: str) -> None:
     conn.close()
 
 def insert_macro(topic: str, title: str, link: str, published: str, clean_text: str, source: str) -> bool:
-    """Inserts a macro article if its link is unique. Returns True if inserted, False if duplicate."""
+    """Inserts a macro article if its link is unique for the topic. Returns True if inserted, False if duplicate."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM macro_data WHERE link = ?", (link,))
+    cursor.execute("SELECT 1 FROM macro_data WHERE link = ? AND topic = ?", (link, topic))
     if cursor.fetchone() is None:
         cursor.execute(
             'INSERT INTO macro_data (topic, title, link, published, clean_text, source) VALUES (?,?,?,?,?,?)',

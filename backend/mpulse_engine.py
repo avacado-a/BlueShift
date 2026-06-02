@@ -375,8 +375,7 @@ class ModelTrainer:
 def ensure_sufficient_data(topic: str, db_path: str, window_size: int = 3):
     """
     Checks if the database has at least window_size + 2 distinct days of aligned macro and micro data
-    for the given topic. If not, it duplicates and distributes existing data over the last few days
-    to ensure the temporal sequence pipeline can run successfully.
+    for the given topic. If not, raises a ValueError to skip the topic cleanly without generating fake data.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -416,73 +415,13 @@ def ensure_sufficient_data(topic: str, db_path: str, window_size: int = 3):
             
     all_dates = macro_dates | micro_dates
     
-    # If we already have sufficient temporal distribution, no backfill needed
-    if len(all_dates) >= required_days and len(macro_rows) >= required_days and len(micro_rows) >= required_days:
-        return
-        
-    logger.info(f"Backfilling and temporal spreading for topic: {topic} (macro days: {len(macro_dates)}, micro days: {len(micro_dates)})")
-    
-    # Target dates to spread the data over: the last required_days ending today
-    today = datetime.now().date()
-    target_dates = [today - timedelta(days=i) for i in range(required_days)]
-    
-    conn = sqlite3.connect(db_path)
-    
-    # 1. Backfill Macro Data
-    if not macro_rows:
-        # Insert dummy articles if none exist
-        for idx, d in enumerate(target_dates):
-            pub_str = datetime.combine(d, datetime.min.time()).strftime("%Y-%m-%d %H:%M:%S")
-            conn.execute(
-                "INSERT INTO macro_data (topic, title, link, published, clean_text, source) VALUES (?,?,?,?,?,?)",
-                (topic, f"Global report on {topic} day {idx}", f"http://example.com/macro/{topic}/{idx}", pub_str, f"Comprehensive news analysis and strategic outlook regarding {topic}.", "feed")
-            )
-    else:
-        # Redistribute existing macro data evenly over target dates (round-robin)
-        cursor = conn.cursor()
-        cursor.execute("SELECT title, link, clean_text, source FROM macro_data WHERE topic = ?", (topic,))
-        available_macro = cursor.fetchall()
-        # Delete all existing rows so we can re-insert with balanced dates
-        conn.execute("DELETE FROM macro_data WHERE topic = ?", (topic,))
-        for i, item in enumerate(available_macro):
-            title, link, clean_text, source = item
-            d = target_dates[i % len(target_dates)]
-            pub_str = datetime.combine(d, datetime.min.time()).strftime("%Y-%m-%d %H:%M:%S")
-            new_link = f"{link}#date_{d}_{i}"
-            conn.execute(
-                "INSERT INTO macro_data (topic, title, link, published, clean_text, source) VALUES (?,?,?,?,?,?)",
-                (topic, title, new_link, pub_str, clean_text, source)
-            )
-            
-    # 2. Backfill Micro Data
-    if not micro_rows:
-        # Insert dummy social posts if none exist
-        for idx, d in enumerate(target_dates):
-            ts = datetime.combine(d, datetime.min.time()).timestamp()
-            conn.execute(
-                "INSERT INTO micro_data (topic, author, clean_text, created_utc, source, type) VALUES (?,?,?,?,?,?)",
-                (topic, f"social_user_{idx}", f"Fascinating developments in {topic}! Extremely interesting stuff.", ts, "bluesky", "post")
-            )
-    else:
-        # Redistribute existing micro data evenly over target dates (round-robin)
-        cursor = conn.cursor()
-        cursor.execute("SELECT author, clean_text, source, type FROM micro_data WHERE topic = ?", (topic,))
-        available_micro = cursor.fetchall()
-        # Delete all existing rows so we can re-insert with balanced dates
-        conn.execute("DELETE FROM micro_data WHERE topic = ?", (topic,))
-        for i, item in enumerate(available_micro):
-            author, clean_text, source, type_val = item
-            d = target_dates[i % len(target_dates)]
-            ts = datetime.combine(d, datetime.min.time()).timestamp()
-            var_text = f"{clean_text} (Day {i})"
-            conn.execute(
-                "INSERT INTO micro_data (topic, author, clean_text, created_utc, source, type) VALUES (?,?,?,?,?,?)",
-                (topic, author, var_text, ts, source, type_val)
-            )
-            
-    conn.commit()
-    conn.close()
-    logger.info(f"Temporal backfilling complete for topic: {topic}")
+    # If there is insufficient data, raise ValueError to fail cleanly
+    if len(all_dates) < required_days or len(macro_rows) < required_days or len(micro_rows) < required_days:
+        raise ValueError(
+            f"Insufficient real data for topic '{topic}'. "
+            f"Required days: {required_days}. "
+            f"Available distinct days: {len(all_dates)} (macro rows: {len(macro_rows)}, micro rows: {len(micro_rows)})."
+        )
 
 
 # =====================================================================
