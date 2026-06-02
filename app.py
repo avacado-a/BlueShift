@@ -369,10 +369,10 @@ def render_research_page():
             <!-- Deep Dive Footer Link -->
             <div style="text-align: center; margin-top: 45px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 35px;">
                 <p style="color: #6b7280; font-size: 0.95rem; margin-bottom: 20px;">
-                    Want to go deeper into the mathematics, metrics, and temporal evaluations?
+                    Want to explore the codebase, research parameters, and access the full paper PDF?
                 </p>
                 <a href="https://github.com/avacado-a/M-PULSE" target="_blank" class="sim-btn" style="text-decoration: none; padding: 12px 28px; font-size: 1rem;">
-                    Read Sidh Parikh's Full Research Paper
+                    Explore M-PULSE on GitHub
                 </a>
             </div>
         </div>
@@ -853,7 +853,8 @@ def render_research_page():
             }, 100);
         </script>
     """
-    st.html(html_content)
+    import streamlit.components.v1 as components
+    components.html(html_content, height=1750, scrolling=False)
 
 def render_feedback_page():
     st.html("""
@@ -948,7 +949,7 @@ st.html(f"""
         <div class="navbar-brand">🌊 BlueShift</div>
         <div class="navbar-links">
             <a href="?page=dashboard" target="_self" class="nav-item {active_dash}">Dashboard</a>
-            <a href="?page=paper" target="_self" class="nav-item {active_paper}">Research Paper</a>
+            <a href="?page=paper" target="_self" class="nav-item {active_paper}">Research Visuals</a>
             <a href="?page=feedback" target="_self" class="nav-item {active_feedback}">Feedback Hub</a>
         </div>
     </div>
