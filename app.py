@@ -36,78 +36,129 @@ else:
     st.warning("Custom CSS file not found. Falling back to native Streamlit styling.")
 
 def render_research_page():
-    html_content = """
+    html_content = r"""
         <style>
-            /* Flip Card CSS */
-            .flip-card {
-                background-color: transparent;
-                height: 250px;
-                perspective: 1000px;
-                cursor: pointer;
+            /* Layout & General Classes */
+            .paper-layout {
+                color: #e5e7eb;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             }
-            .flip-card-inner {
-                position: relative;
-                width: 100%;
-                height: 100%;
-                text-align: center;
-                transition: transform 0.6s;
-                transform-style: preserve-3d;
+            .badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 12px;
             }
-            .flip-card:hover .flip-card-inner {
-                transform: rotateY(180deg);
-            }
-            .flip-card-front, .flip-card-back {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                backface-visibility: hidden;
+            .glass-panel {
+                background: rgba(255, 255, 255, 0.01);
+                border: 1px solid rgba(255, 255, 255, 0.05);
                 border-radius: 12px;
-                padding: 22px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+                padding: 25px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            }
+            .interactive-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
                 align-items: center;
-                box-sizing: border-box;
             }
-            .flip-card-front {
-                background: rgba(255, 255, 255, 0.02);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .flip-card-back {
-                background: rgba(0, 242, 254, 0.05);
-                border: 1px solid rgba(0, 242, 254, 0.3);
-                transform: rotateY(180deg);
+            @media (max-width: 768px) {
+                .interactive-grid {
+                    grid-template-columns: 1fr;
+                }
             }
 
-            /* Pipeline Stepper Hover */
-            .pipeline-step {
-                transition: all 0.3s ease;
+            /* Custom Interactive Controls */
+            .sim-btn {
+                background: #00f2fe;
+                color: #0b0f19;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+                transition: all 0.2s ease;
+            }
+            .sim-btn:hover {
+                background: #00e0eb;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+            }
+            .sim-btn-secondary {
+                background: rgba(255, 255, 255, 0.05);
+                color: #ffffff;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .sim-btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .sim-input {
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: white;
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 0.9rem;
+                outline: none;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .sim-select {
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: white;
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 0.9rem;
+                outline: none;
+                cursor: pointer;
+            }
+            .slider-control {
+                width: 100%;
+                margin: 10px 0;
+                accent-color: #00f2fe;
+            }
+
+            /* Consoles and SVGs */
+            .console-box {
+                background: #05070c;
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: 8px;
+                height: 180px;
                 overflow: hidden;
-                position: relative;
+                padding: 15px;
+                display: flex;
+                flex-direction: column-reverse;
+                box-sizing: border-box;
             }
-            .pipeline-step::before {
-                content: '';
-                position: absolute;
-                top: 0; left: -100%; width: 100%; height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.1), transparent);
-                transition: left 0.5s ease;
+            .svg-container {
+                background: #05070c;
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: 8px;
+                width: 100%;
+                height: 250px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
             }
-            .pipeline-step:hover::before {
-                left: 100%;
-            }
-            .pipeline-step:hover {
-                transform: translateY(-5px);
-                border-color: #00f2fe;
-                box-shadow: 0 5px 15px rgba(0, 242, 254, 0.15);
-            }
-            .pipeline-detail {
-                opacity: 0.4;
-                transition: opacity 0.3s ease;
-                filter: blur(2px);
-            }
-            .pipeline-step:hover .pipeline-detail {
-                opacity: 1;
-                filter: blur(0px);
+
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(-15px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
             /* VRAM Game CSS */
@@ -131,148 +182,165 @@ def render_research_page():
 
         <div class="glass-container paper-layout" style="padding: 40px; max-width: 100%; box-sizing: border-box; margin: 0 auto;">
             
+            <!-- Header Section -->
             <div class="paper-header" style="text-align: center; margin-bottom: 45px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 35px;">
-                <span class="badge" style="background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.25); margin-bottom: 12px; cursor: pointer;" title="Machine-Prediction Using Linguistic Semantic Embeddings">M-PULSE METHODOLOGY</span>
-                <h1 style="font-size: 2.4rem; font-weight: 800; color: #ffffff; line-height: 1.3; margin-bottom: 15px; letter-spacing: -0.02em;">
-                    How M-PULSE Forecasts Media Trends
+                <span class="badge" style="background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.25);">Interactive Technical Showcase</span>
+                <h1 style="font-size: 2.6rem; font-weight: 800; color: #ffffff; line-height: 1.3; margin-bottom: 15px; letter-spacing: -0.02em;">
+                    The M-PULSE Forecasting Architecture
                 </h1>
-                <div class="paper-author" style="font-size: 1.2rem; font-weight: 600; color: #00f2fe; margin-bottom: 5px;">Sidh Parikh</div>
-                <div style="font-size: 0.95rem; color: #9ca3af; line-height: 1.5;">
+                <div class="paper-author" style="font-size: 1.25rem; font-weight: 600; color: #00f2fe; margin-bottom: 5px;">Sidh Parikh</div>
+                <div style="font-size: 0.95rem; color: #9ca3af; line-height: 1.5; margin-bottom: 15px;">
                     Glenelg High School &bull; Gifted and Talented Independent Research &bull; Ms. Leila Chawkat
                 </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 45px;">
-                <div class="news-item" style="padding: 25px; background: rgba(243, 85, 136, 0.02); border: 1px solid rgba(243, 85, 136, 0.15); border-radius: 12px;">
-                    <h3 style="color: #f35588; margin-bottom: 12px;">The Core Problem</h3>
-                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6;">
-                        Standard Large Language Models (LLMs) are frozen in time, treat all topics identically, and require thousands of dollars in server hardware to run.
-                    </p>
-                </div>
-                <div class="news-item" style="padding: 25px; background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.15); border-radius: 12px;">
-                    <h3 style="color: #00f2fe; margin-bottom: 12px;">The M-PULSE Solution</h3>
-                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6;">
-                        A dual-stream NLP framework that builds dynamic semantic spaces on-the-fly, using lightweight LSTMs that run on standard consumer computers.
-                    </p>
+                <div>
+                    <a href="https://github.com/avacado-a/M-PULSE" target="_blank" class="sim-btn-secondary" style="font-size: 0.85rem; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" style="display:inline-block; vertical-align:middle;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                        Explore the GitHub Repository
+                    </a>
                 </div>
             </div>
 
-            <div class="section-title" style="margin-top: 0; display: flex; align-items: center; justify-content: space-between;">
-                <span>Step-by-Step Forecasting Engine</span>
-                <span style="font-size: 0.75rem; color: #6b7280; font-weight: normal;">Hover over steps to decrypt</span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 45px;">
-                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
+            <!-- Pipeline Step 1 -->
+            <div class="glass-panel">
+                <div class="interactive-grid">
                     <div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">01</div>
-                        <h4 style="color: #ffffff; margin-bottom: 8px;">Dual-Stream Ingest</h4>
-                        <div class="pipeline-detail">
-                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                                Ingests news timelines from <strong>GDELT</strong> and real-time social conversations from <strong>Bluesky</strong>.
-                            </p>
+                        <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe;">STEP 01</span>
+                        <h2 style="color: #ffffff; margin-top: 0; margin-bottom: 12px;">Multi-Resolution Ingestion</h2>
+                        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                            M-PULSE pulls timeline snapshots from two distinct resolutions: institutional news anchors (<strong>Macro-stream</strong> via GDELT API) and real-time public chatter (<strong>Micro-stream</strong> via Bluesky/AT Protocol). Click the simulator controls to load data chunks.
+                        </p>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <button class="sim-btn" onclick="ingestItem('macro')">Pull News (GDELT)</button>
+                            <button class="sim-btn-secondary" onclick="ingestItem('micro')" style="border-color: #f35588; color: #f35588;">Pull Post (Bluesky)</button>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #9ca3af;">
+                            Total Ingested -- GDELT News: <code id="macro-count" style="color: #00f2fe;">0</code> | Social Posts: <code id="micro-count" style="color: #f35588;">0</code>
                         </div>
                     </div>
-                    <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">PIPELINE ENTRY</span>
-                </div>
-                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
                     <div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">02</div>
-                        <h4 style="color: #ffffff; margin-bottom: 8px;">DBSCAN Filtering</h4>
-                        <div class="pipeline-detail">
-                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                                Uses a <strong>SentenceTransformer</strong> and <strong>DBSCAN Clustering</strong> to drop anomalies and strip extreme political bias.
-                            </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase;">Temporal Data Stream Ingest</span>
+                            <span id="db-icon" style="transition: all 0.15s ease; font-size: 1.4rem;">💾</span>
                         </div>
-                    </div>
-                    <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">BIAS MITIGATION</span>
-                </div>
-                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
-                    <div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">03</div>
-                        <h4 style="color: #ffffff; margin-bottom: 8px;">Local Word2Vec</h4>
-                        <div class="pipeline-detail">
-                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                                Trains a custom, localized <strong>Word2Vec</strong> model to extract high-context local semantic maps.
-                            </p>
-                        </div>
-                    </div>
-                    <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">CONTEXT BUILDING</span>
-                </div>
-                <div class="news-item pipeline-step" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); height: 260px;">
-                    <div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #00f2fe; margin-bottom: 8px;">04</div>
-                        <h4 style="color: #ffffff; margin-bottom: 8px;">LSTM Prediction</h4>
-                        <div class="pipeline-detail">
-                            <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.5;">
-                                Fuses the latent vectors from news & social streams inside a <strong>PyTorch LSTM</strong> network to forecast volume.
-                            </p>
-                        </div>
-                    </div>
-                    <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe; font-size: 0.7rem;">DUAL-STREAM FORECAST</span>
-                </div>
-            </div>
-
-            <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
-                <span>Core Research Discoveries</span>
-                <span style="font-size: 0.75rem; color: #6b7280; font-weight: normal;">Flip cards to reveal findings</span>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 45px;">
-                
-                <div class="flip-card">
-                    <div class="flip-card-inner">
-                        <div class="flip-card-front">
-                            <span style="font-size: 3rem; margin-bottom: 15px;">📊</span>
-                            <h4 style="color: #ffffff; margin: 0;">What drives predictability?</h4>
-                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
-                        </div>
-                        <div class="flip-card-back">
-                            <h4 style="color: #00f2fe; margin-bottom: 10px;">Topic Structure Rules All</h4>
-                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
-                                Objective topics produce the lowest model errors. Politically polarized topics exhibit high volatility and diverge rapidly.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flip-card">
-                    <div class="flip-card-inner">
-                        <div class="flip-card-front">
-                            <span style="font-size: 3rem; margin-bottom: 15px;">⚓</span>
-                            <h4 style="color: #ffffff; margin: 0;">Social Media vs. Reality</h4>
-                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
-                        </div>
-                        <div class="flip-card-back">
-                            <h4 style="color: #00f2fe; margin-bottom: 10px;">The Anchoring Power of News</h4>
-                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
-                                Isolated social media models fail entirely. Introducing institutional news as a "dual-stream anchor" absorbs outlier shocks and stabilizes predictions.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flip-card">
-                    <div class="flip-card-inner">
-                        <div class="flip-card-front">
-                            <span style="font-size: 3rem; margin-bottom: 15px;">⏱️</span>
-                            <h4 style="color: #ffffff; margin: 0;">Do feelings predict trends?</h4>
-                            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 10px;">Hover to uncover</p>
-                        </div>
-                        <div class="flip-card-back">
-                            <h4 style="color: #00f2fe; margin-bottom: 10px;">The Cognitive Lag Window</h4>
-                            <p style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; margin:0;">
-                                Sentiment is a lagging indicator. Conversation volume spikes first, followed by a latency window while the public processes updates before sentiment catches up.
-                            </p>
+                        <div class="console-box" id="ingest-list">
+                            <div style="color: #4b5563; font-size: 0.8rem; text-align: center; margin-bottom: 60px;">Database empty. Click buttons to scrape streams...</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-container" style="background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; margin-bottom: 20px; border-radius: 12px;">
+            <!-- Pipeline Step 2 -->
+            <div class="glass-panel">
+                <div class="interactive-grid">
+                    <div>
+                        <span class="badge" style="background: rgba(163, 230, 53, 0.12); color: #a3e635;">STEP 02</span>
+                        <h2 style="color: #ffffff; margin-top: 0; margin-bottom: 12px;">DBSCAN Bias Mitigation</h2>
+                        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                            Raw text is encoded using a <strong>SentenceTransformer</strong> into high-dimensional space. We apply <strong>DBSCAN Clustering</strong> to identify core topic densities. Isolated points that do not fall into dense clusters represent noise or extreme outlier political bias, which are dynamically deleted.
+                        </p>
+                        <div>
+                            <label style="font-size: 0.85rem; color: #9ca3af;">Adjust Cluster Radius (Epsilon):</label>
+                            <input type="range" id="dbscan-eps" class="slider-control" min="20" max="120" value="65" oninput="updateDBSCAN()">
+                        </div>
+                        <div id="dbscan-status" style="font-size: 0.9rem; color: #a3e635; font-family: monospace; margin-top: 10px;">
+                            Epsilon: 65.0 px | Outliers Removed: 4 / 12
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase;">DBSCAN Outlier Removal Grid</span>
+                            <span style="font-size: 0.75rem; color: #9ca3af;"><span style="color: #00f2fe;">●</span> Tech <span style="color: #a3e635;">●</span> Space <span style="color: #6b7280;">●</span> Outlier</span>
+                        </div>
+                        <div class="svg-container">
+                            <svg id="dbscan-svg" width="350" height="300" style="background:transparent;"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Step 3 -->
+            <div class="glass-panel">
+                <div class="interactive-grid">
+                    <div>
+                        <span class="badge" style="background: rgba(243, 85, 136, 0.12); color: #f35588;">STEP 03</span>
+                        <h2 style="color: #ffffff; margin-top: 0; margin-bottom: 12px;">The Local Vector Space</h2>
+                        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
+                            A custom Word2Vec model maps vocabulary into a 2D coordinate system. Words that share contexts align closer together. Project a new word into the vector space below to see how it groups with existing topics.
+                        </p>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" id="vector-word-input" class="sim-input" placeholder="Type a word (e.g. processor, orbit)">
+                            <select id="vector-category-select" class="sim-select">
+                                <option value="tech">Tech Cluster</option>
+                                <option value="space">Space Cluster</option>
+                                <option value="health">Health Cluster</option>
+                            </select>
+                        </div>
+                        <button class="sim-btn" style="background: #f35588; color: white; box-shadow: 0 4px 15px rgba(243, 85, 136, 0.2); width: 100%; margin-bottom: 15px;" onclick="addWordToVector()">Project into Vector Database</button>
+                        
+                        <div id="vector-report" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; font-size: 0.8rem; line-height: 1.4; display: none; font-family: monospace;"></div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase;">2D Semantic Vector Grid</span>
+                            <span style="font-size: 0.8rem; color: #9ca3af; font-family: monospace;">cos(θ) Calculation</span>
+                        </div>
+                        <div class="svg-container">
+                            <svg id="vector-svg" width="300" height="300" style="background:transparent;"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Step 4 -->
+            <div class="glass-panel">
+                <div class="interactive-grid">
+                    <div>
+                        <span class="badge" style="background: rgba(0, 242, 254, 0.08); color: #00f2fe;">STEP 04</span>
+                        <h2 style="color: #ffffff; margin-top: 0; margin-bottom: 12px;">LSTM Dual-Stream Prediction</h2>
+                        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
+                            A recurrent <strong>PyTorch LSTM</strong> network fuses the temporal profiles of news and social media streams. Adjust the weights of each stream and the time alignment offset to see how it shapes the forecasted target trend line.
+                        </p>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color: #9ca3af;">
+                                <span>Macro News Weight (Anchoring):</span>
+                                <span id="val-wmacro">50%</span>
+                            </div>
+                            <input type="range" id="lstm-wmacro" class="slider-control" min="0" max="100" value="50" oninput="document.getElementById('val-wmacro').innerText=this.value+'%'; updateLSTMChart();">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color: #9ca3af;">
+                                <span>Micro Social Weight (Reaction):</span>
+                                <span id="val-wmicro">50%</span>
+                            </div>
+                            <input type="range" id="lstm-wmicro" class="slider-control" min="0" max="100" value="50" oninput="document.getElementById('val-wmicro').innerText=this.value+'%'; updateLSTMChart();">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color: #9ca3af;">
+                                <span>Micro Cognitive Lag Offset:</span>
+                                <span id="val-lag">0 days</span>
+                            </div>
+                            <input type="range" id="lstm-lag" class="slider-control" min="-5" max="5" value="0" oninput="document.getElementById('val-lag').innerText=this.value+' days'; updateLSTMChart();">
+                        </div>
+                        <div id="lstm-status" style="font-size: 0.85rem; color: #00f2fe; font-family: monospace;"></div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; color: #6b7280; text-transform: uppercase;">Dual-Stream LSTM Timeline Output</span>
+                            <span style="font-size: 0.75rem; color: #9ca3af;"><span style="color: rgba(0, 242, 254, 0.5); font-weight: bold;">--</span> GDELT <span style="color: rgba(243, 85, 136, 0.5); font-weight: bold;">--</span> Social <span style="color: #00f2fe; font-weight: bold;">─</span> M-PULSE</span>
+                        </div>
+                        <div class="svg-container">
+                            <svg id="lstm-svg" width="350" height="150" style="background:transparent;"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hardware Accessibility Game / Benchmark -->
+            <div class="glass-panel" style="background: rgba(0, 242, 254, 0.02); border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; border-radius: 12px;">
                 <div style="text-align: center; margin-bottom: 20px;">
                     <h3 style="color: #00f2fe; margin-bottom: 10px;">Hardware Accessibility Benchmark</h3>
-                    <p style="color: #9ca3af; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">
-                        Run the simulation below to see how M-PULSE keeps research democratized by enforcing a strict operational memory ceiling.
+                    <p style="color: #9ca3af; font-size: 0.95rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                        M-PULSE keeps research democratized by enforcing a strict memory ceiling, running local simulations under a strict VRAM cap.
                     </p>
                 </div>
 
@@ -298,22 +366,446 @@ def render_research_page():
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 35px;">
-                <p style="color: #6b7280; font-size: 0.9rem;">
-                    Full M-PULSE source code, models, and research parameters are open source:
-                    <a href="https://github.com/avacado-a/M-PULSE" target="_blank" style="color: #00f2fe; text-decoration: underline; margin-left: 5px;">GitHub Repository</a>
+            <!-- Deep Dive Footer Link -->
+            <div style="text-align: center; margin-top: 45px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 35px;">
+                <p style="color: #6b7280; font-size: 0.95rem; margin-bottom: 20px;">
+                    Want to go deeper into the mathematics, metrics, and temporal evaluations?
                 </p>
+                <a href="https://github.com/avacado-a/M-PULSE" target="_blank" class="sim-btn" style="text-decoration: none; padding: 12px 28px; font-size: 1rem;">
+                    Read Sidh Parikh's Full Research Paper
+                </a>
             </div>
         </div>
 
         <script>
+            // STEP 01 - Ingestion Simulator
+            const gdeltHeadlines = [
+                "NVIDIA Blackwell processors begin global shipments",
+                "SpaceX launches 23 Starlink satellites into orbit",
+                "WHO reports new Ebola outbreak containment success",
+                "Global semiconductor indices hit new records",
+                "Liverpool FC appoints Arne Slot as head coach",
+                "China maritime border negotiations conclude in Manila"
+            ];
+            const bskyChatter = [
+                "Blackwell B200 specs are absolutely insane!",
+                "Starlink train visible in the sky tonight!",
+                "Hoping the WHO limits the outbreak spread.",
+                "Semiconductor stocks are carrying my portfolio.",
+                "Slot has a huge task ahead post-Klopp.",
+                "Border security talks in SCS heating up."
+            ];
+
+            let macroCount = 0;
+            let microCount = 0;
+
+            function ingestItem(stream) {
+                const list = document.getElementById("ingest-list");
+                
+                // Clear initial placeholder if exists
+                if (list.querySelector("div[style*='color: #4b5563']")) {
+                    list.innerHTML = "";
+                }
+                
+                const item = document.createElement("div");
+                item.style.padding = "10px";
+                item.style.marginBottom = "8px";
+                item.style.borderRadius = "6px";
+                item.style.fontSize = "0.85rem";
+                item.style.border = "1px solid rgba(255,255,255,0.05)";
+                item.style.fontFamily = "monospace";
+                item.style.animation = "slideIn 0.3s ease-out";
+                
+                if (stream === 'macro') {
+                    const text = gdeltHeadlines[Math.floor(Math.random() * gdeltHeadlines.length)];
+                    item.style.background = "rgba(0, 242, 254, 0.05)";
+                    item.style.borderColor = "rgba(0, 242, 254, 0.2)";
+                    item.innerHTML = `<span style="color: #00f2fe; font-weight: bold;">[MACRO GDELT]</span> ${text}`;
+                    macroCount++;
+                    document.getElementById("macro-count").innerText = macroCount;
+                } else {
+                    const text = bskyChatter[Math.floor(Math.random() * bskyChatter.length)];
+                    item.style.background = "rgba(243, 85, 136, 0.05)";
+                    item.style.borderColor = "rgba(243, 85, 136, 0.2)";
+                    item.innerHTML = `<span style="color: #f35588; font-weight: bold;">[MICRO BSKY]</span> ${text}`;
+                    microCount++;
+                    document.getElementById("micro-count").innerText = microCount;
+                }
+                
+                list.insertBefore(item, list.firstChild);
+                if (list.children.length > 5) {
+                    list.removeChild(list.lastChild);
+                }
+                
+                // Pulse the database icon
+                const dbIcon = document.getElementById("db-icon");
+                dbIcon.style.transform = "scale(1.2)";
+                dbIcon.style.filter = "drop-shadow(0 0 10px #00f2fe)";
+                setTimeout(() => {
+                    dbIcon.style.transform = "scale(1)";
+                    dbIcon.style.filter = "none";
+                }, 150);
+            }
+
+            // STEP 02 - DBSCAN Simulator
+            const dbscanPoints = [
+                { x: 80, y: 80, name: "nvidia B200" },
+                { x: 95, y: 90, name: "blackwell chip" },
+                { x: 70, y: 95, name: "gpu hardware" },
+                { x: 90, y: 75, name: "processor specs" },
+                
+                { x: 260, y: 160, name: "spacex starlink" },
+                { x: 280, y: 150, name: "satellite orbit" },
+                { x: 245, y: 180, name: "rocket booster" },
+                { x: 290, y: 165, name: "falcon 9 launch" },
+                
+                { x: 60, y: 220, name: "spam outrage post" },
+                { x: 270, y: 70, name: "random link bait" },
+                { x: 150, y: 120, name: "irrelevant news" },
+                { x: 200, y: 230, name: "unrelated chatter" }
+            ];
+
+            function updateDBSCAN() {
+                const eps = parseFloat(document.getElementById("dbscan-eps").value);
+                const minPts = 3;
+                const svg = document.getElementById("dbscan-svg");
+                svg.innerHTML = ""; // Clear
+                
+                // Draw grid lines
+                for (let i = 50; i <= 300; i += 50) {
+                    const lineH = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineH.setAttribute("x1", "0");
+                    lineH.setAttribute("y1", i);
+                    lineH.setAttribute("x2", "350");
+                    lineH.setAttribute("y2", i);
+                    lineH.setAttribute("stroke", "rgba(255,255,255,0.03)");
+                    svg.appendChild(lineH);
+                    
+                    const lineV = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineV.setAttribute("x1", i);
+                    lineV.setAttribute("y1", "0");
+                    lineV.setAttribute("x2", i);
+                    lineV.setAttribute("y2", "300");
+                    lineV.setAttribute("stroke", "rgba(255,255,255,0.03)");
+                    svg.appendChild(lineV);
+                }
+
+                // Compute neighbors
+                const neighborCounts = dbscanPoints.map(p1 => {
+                    let count = 0;
+                    dbscanPoints.forEach(p2 => {
+                        const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                        if (dist <= eps) count++;
+                    });
+                    return count;
+                });
+
+                dbscanPoints.forEach((p, idx) => {
+                    const isCore = neighborCounts[idx] >= minPts;
+                    let isNoise = true;
+                    
+                    dbscanPoints.forEach((p2, idx2) => {
+                        if (neighborCounts[idx2] >= minPts) {
+                            const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                            if (dist <= eps) {
+                                isNoise = false;
+                            }
+                        }
+                    });
+
+                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", p.x);
+                    circle.setAttribute("cy", p.y);
+                    circle.setAttribute("r", "7");
+                    
+                    if (isNoise) {
+                        circle.setAttribute("fill", "#4b5563");
+                        circle.setAttribute("stroke", "rgba(255,255,255,0.1)");
+                        circle.setAttribute("style", "opacity: 0.55; transition: all 0.3s;");
+                    } else {
+                        if (p.x < 150) {
+                            circle.setAttribute("fill", "#00f2fe");
+                            circle.setAttribute("stroke", "rgba(0, 242, 254, 0.4)");
+                        } else {
+                            circle.setAttribute("fill", "#a3e635");
+                            circle.setAttribute("stroke", "rgba(163, 230, 53, 0.4)");
+                        }
+                        circle.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(255,255,255,0.1)); transition: all 0.3s;");
+                    }
+                    
+                    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                    title.textContent = `${p.name} (${isNoise ? 'Noise / Outlier' : 'Core Cluster Point'})`;
+                    circle.appendChild(title);
+                    
+                    g.appendChild(circle);
+                    svg.appendChild(g);
+                });
+
+                const noiseCount = dbscanPoints.filter((p, idx) => {
+                    let isNoise = true;
+                    dbscanPoints.forEach((p2, idx2) => {
+                        if (neighborCounts[idx2] >= minPts) {
+                            const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                            if (dist <= eps) isNoise = false;
+                        }
+                    });
+                    return isNoise;
+                }).length;
+                
+                document.getElementById("dbscan-status").innerHTML = `Epsilon Cluster Radius: <code>${eps.toFixed(1)}px</code> | Outliers Deleted: <strong style="color:#f35588;">${noiseCount}</strong> / ${dbscanPoints.length}`;
+            }
+
+            // STEP 03 - Vector space Database Simulator
+            const vectorPoints = [
+                { x: -0.6, y: 0.4, label: "nvidia", cat: "tech" },
+                { x: -0.7, y: 0.3, label: "processor", cat: "tech" },
+                { x: -0.5, y: 0.5, label: "chip", cat: "tech" },
+                
+                { x: 0.6, y: 0.5, label: "spacex", cat: "space" },
+                { x: 0.7, y: 0.4, label: "starlink", cat: "space" },
+                { x: 0.5, y: 0.6, label: "rocket", cat: "space" },
+                
+                { x: 0.0, y: -0.6, label: "ebola", cat: "health" },
+                { x: 0.1, y: -0.7, label: "outbreak", cat: "health" },
+                { x: -0.1, y: -0.5, label: "virus", cat: "health" }
+            ];
+
+            function drawVectorSpace() {
+                const svg = document.getElementById("vector-svg");
+                svg.innerHTML = "";
+                
+                // Draw grid lines
+                for (let i = 50; i < 300; i += 50) {
+                    const lineX = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineX.setAttribute("x1", "0"); lineX.setAttribute("y1", i);
+                    lineX.setAttribute("x2", "300"); lineX.setAttribute("y2", i);
+                    lineX.setAttribute("stroke", "rgba(255,255,255,0.02)");
+                    svg.appendChild(lineX);
+
+                    const lineY = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineY.setAttribute("x1", i); lineY.setAttribute("y1", "0");
+                    lineY.setAttribute("x2", i); lineY.setAttribute("y2", "300");
+                    lineY.setAttribute("stroke", "rgba(255,255,255,0.02)");
+                    svg.appendChild(lineY);
+                }
+
+                // Draw central axes
+                const axisX = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                axisX.setAttribute("x1", "0"); axisX.setAttribute("y1", "150");
+                axisX.setAttribute("x2", "300"); axisX.setAttribute("y2", "150");
+                axisX.setAttribute("stroke", "rgba(255,255,255,0.12)");
+                svg.appendChild(axisX);
+                
+                const axisY = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                axisY.setAttribute("x1", "150"); axisY.setAttribute("y1", "0");
+                axisY.setAttribute("x2", "150"); axisY.setAttribute("y2", "300");
+                axisY.setAttribute("stroke", "rgba(255,255,255,0.12)");
+                svg.appendChild(axisY);
+
+                // Cluster areas (Shaded boundaries)
+                const regTech = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                regTech.setAttribute("cx", "60"); regTech.setAttribute("cy", "90"); regTech.setAttribute("r", "45");
+                regTech.setAttribute("fill", "rgba(0, 242, 254, 0.02)");
+                regTech.setAttribute("stroke", "rgba(0, 242, 254, 0.08)");
+                regTech.setAttribute("stroke-dasharray", "3");
+                svg.appendChild(regTech);
+
+                const regSpace = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                regSpace.setAttribute("cx", "240"); regSpace.setAttribute("cy", "90"); regSpace.setAttribute("r", "45");
+                regSpace.setAttribute("fill", "rgba(163, 230, 53, 0.02)");
+                regSpace.setAttribute("stroke", "rgba(163, 230, 53, 0.08)");
+                regSpace.setAttribute("stroke-dasharray", "3");
+                svg.appendChild(regSpace);
+
+                const regHealth = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                regHealth.setAttribute("cx", "150"); regHealth.setAttribute("cy", "240"); regHealth.setAttribute("r", "45");
+                regHealth.setAttribute("fill", "rgba(243, 85, 136, 0.02)");
+                regHealth.setAttribute("stroke", "rgba(243, 85, 136, 0.08)");
+                regHealth.setAttribute("stroke-dasharray", "3");
+                svg.appendChild(regHealth);
+
+                vectorPoints.forEach(p => {
+                    const cx = 150 + p.x * 150;
+                    const cy = 150 - p.y * 150; 
+                    
+                    let color = "#00f2fe";
+                    if (p.cat === "space") color = "#a3e635";
+                    if (p.cat === "health") color = "#f35588";
+
+                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", cx);
+                    circle.setAttribute("cy", cy);
+                    circle.setAttribute("r", "5");
+                    circle.setAttribute("fill", color);
+                    circle.setAttribute("style", "filter: drop-shadow(0 0 3px rgba(255,255,255,0.1));");
+                    g.appendChild(circle);
+                    
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", cx + 8);
+                    text.setAttribute("y", cy + 3);
+                    text.setAttribute("fill", "#9ca3af");
+                    text.setAttribute("font-size", "9px");
+                    text.setAttribute("font-family", "monospace");
+                    text.textContent = p.label;
+                    g.appendChild(text);
+                    
+                    svg.appendChild(g);
+                });
+            }
+
+            function addWordToVector() {
+                const input = document.getElementById("vector-word-input");
+                const catSelect = document.getElementById("vector-category-select");
+                const word = input.value.trim().toLowerCase();
+                
+                if (!word) return;
+                
+                const cat = catSelect.value;
+                
+                let base = { x: 0, y: 0 };
+                if (cat === "tech") base = { x: -0.6, y: 0.4 };
+                else if (cat === "space") base = { x: 0.6, y: 0.5 };
+                else if (cat === "health") base = { x: 0.0, y: -0.6 };
+                
+                const newPt = {
+                    x: base.x + (Math.random() - 0.5) * 0.15,
+                    y: base.y + (Math.random() - 0.5) * 0.15,
+                    label: word,
+                    cat: cat
+                };
+                
+                vectorPoints.push(newPt);
+                drawVectorSpace();
+                
+                let nearestNode = null;
+                let maxSim = -1;
+                
+                vectorPoints.forEach(p => {
+                    if (p.label !== word) {
+                        // Cosine Similarity formula: cos(theta) = A.B / (||A||*||B||)
+                        const dotProduct = newPt.x * p.x + newPt.y * p.y;
+                        const magA = Math.hypot(newPt.x, newPt.y);
+                        const magB = Math.hypot(p.x, p.y);
+                        const sim = dotProduct / (magA * magB);
+                        
+                        if (sim > maxSim) {
+                            maxSim = sim;
+                            nearestNode = p;
+                        }
+                    }
+                });
+
+                const report = document.getElementById("vector-report");
+                report.style.display = "block";
+                report.innerHTML = `
+                    <span style="color: #f35588; font-weight: bold;">[Semantic Mapping]</span><br>
+                    Word "<strong>${word}</strong>" mapped to coordinates: <code>(${newPt.x.toFixed(3)}, ${newPt.y.toFixed(3)})</code>.<br>
+                    Similarity Algorithm: <code>cos(θ) = A·B / (||A|| ||B||)</code><br>
+                    Nearest Semantic Node: "<strong>${nearestNode.label}</strong>" (Cosine Similarity: <strong style="color: #00f2fe;">${maxSim.toFixed(4)}</strong>).
+                `;
+                
+                input.value = "";
+            }
+
+            // STEP 04 - LSTM Forecasting Timeline Chart
+            function updateLSTMChart() {
+                const wMacro = parseFloat(document.getElementById("lstm-wmacro").value) / 100;
+                const wMicro = parseFloat(document.getElementById("lstm-wmicro").value) / 100;
+                const lag = parseInt(document.getElementById("lstm-lag").value); // Shift
+                
+                const svg = document.getElementById("lstm-svg");
+                svg.innerHTML = ""; 
+                
+                // Draw chart grid
+                for (let i = 30; i <= 120; i += 30) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", "0");
+                    line.setAttribute("y1", i);
+                    line.setAttribute("x2", "350");
+                    line.setAttribute("y2", i);
+                    line.setAttribute("stroke", "rgba(255,255,255,0.03)");
+                    svg.appendChild(line);
+                }
+                
+                const xPoints = [15, 55, 95, 135, 175, 215, 255, 295, 335];
+                const macroY = [120, 120, 115, 100, 50, 35, 60, 100, 120];
+                const microY = [120, 100, 40, 20, 70, 110, 120, 120, 120];
+                
+                // Draw GDELT Macro Timeline (Blue)
+                let macroPathD = `M ${xPoints[0]} ${macroY[0]}`;
+                for (let i = 1; i < xPoints.length; i++) {
+                    macroPathD += ` L ${xPoints[i]} ${macroY[i]}`;
+                }
+                const macroPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                macroPath.setAttribute("d", macroPathD);
+                macroPath.setAttribute("fill", "none");
+                macroPath.setAttribute("stroke", "rgba(0, 242, 254, 0.35)");
+                macroPath.setAttribute("stroke-width", "2");
+                macroPath.setAttribute("stroke-dasharray", "4");
+                svg.appendChild(macroPath);
+                
+                // Draw Social Micro Timeline (Red/Pink, shifted horizontally by Lag)
+                const microPoints = xPoints.map((x, idx) => {
+                    return { x: x + lag * 8, y: microY[idx] };
+                });
+                
+                let microPathD = `M ${microPoints[0].x} ${microPoints[0].y}`;
+                for (let i = 1; i < microPoints.length; i++) {
+                    microPathD += ` L ${microPoints[i].x} ${microPoints[i].y}`;
+                }
+                const microPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                microPath.setAttribute("d", microPathD);
+                microPath.setAttribute("fill", "none");
+                microPath.setAttribute("stroke", "rgba(243, 85, 136, 0.35)");
+                microPath.setAttribute("stroke-width", "2");
+                microPath.setAttribute("stroke-dasharray", "4");
+                svg.appendChild(microPath);
+                
+                // Draw M-PULSE Forecast Line (Cyan Solid)
+                const combinedPoints = xPoints.map((x, idx) => {
+                    const yMacroVal = macroY[idx];
+                    const yMicroVal = microY[idx];
+                    
+                    const idleY = 125;
+                    const macroDelta = idleY - yMacroVal;
+                    const microDelta = idleY - yMicroVal;
+                    
+                    // Fusion equation weight multiplier
+                    const combinedDelta = (macroDelta * wMacro + microDelta * wMicro);
+                    const finalY = idleY - combinedDelta;
+                    
+                    return { x, y: Math.max(10, Math.min(140, finalY)) };
+                });
+                
+                let forecastPathD = `M ${combinedPoints[0].x} ${combinedPoints[0].y}`;
+                for (let i = 1; i < combinedPoints.length; i++) {
+                    forecastPathD += ` L ${combinedPoints[i].x} ${combinedPoints[i].y}`;
+                }
+                const forecastPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                forecastPath.setAttribute("d", forecastPathD);
+                forecastPath.setAttribute("fill", "none");
+                forecastPath.setAttribute("stroke", "#00f2fe");
+                forecastPath.setAttribute("stroke-width", "3.5");
+                forecastPath.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(0, 242, 254, 0.5));");
+                svg.appendChild(forecastPath);
+                
+                document.getElementById("lstm-status").innerHTML = `
+                    LSTM Weight distribution: <code>[Macro ${Math.round(wMacro*100)}% | Micro ${Math.round(wMicro*100)}%]</code><br>
+                    Alignment Sync: <code>${lag >= 0 ? '+' + lag : lag} day offset</code>
+                `;
+            }
+
+            // VRAM Access Benchmarking Simulator
             function runStandardLLM() {
                 const fill = document.getElementById('vram-fill');
                 const text = document.getElementById('vram-text');
                 const status = document.getElementById('system-status');
                 
                 fill.style.width = '100%';
-                fill.style.backgroundColor = '#f35588'; // Red/Pink
+                fill.style.backgroundColor = '#f35588'; 
                 text.innerText = '80.0 GB / 8.0 GB (Critical)';
                 
                 status.style.color = '#f35588';
@@ -325,8 +817,8 @@ def render_research_page():
                 const text = document.getElementById('vram-text');
                 const status = document.getElementById('system-status');
                 
-                fill.style.width = '70%'; // Under 6GB limit
-                fill.style.backgroundColor = '#00f2fe'; // Cyan
+                fill.style.width = '72.5%'; 
+                fill.style.backgroundColor = '#00f2fe'; 
                 text.innerText = '5.8 GB / 8.0 GB (Stable)';
                 
                 status.style.color = '#00f2fe';
@@ -345,6 +837,20 @@ def render_research_page():
                 status.style.color = '#6b7280';
                 status.innerText = 'Ready for benchmark...';
             }
+
+            // Run initializers
+            window.onload = function() {
+                updateDBSCAN();
+                drawVectorSpace();
+                updateLSTMChart();
+            };
+            
+            // Handle cases where scripts evaluate before/after DOM completes inside Streamlit frames
+            setTimeout(() => {
+                updateDBSCAN();
+                drawVectorSpace();
+                updateLSTMChart();
+            }, 100);
         </script>
     """
     st.html(html_content)
