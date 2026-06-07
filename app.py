@@ -854,7 +854,7 @@ def render_research_page():
         </script>
     """
     import streamlit.components.v1 as components
-    components.html(html_content, height=2400, scrolling=False)
+    components.html(html_content, height=4000, scrolling=False)
 
 def render_feedback_page():
     st.html("""
