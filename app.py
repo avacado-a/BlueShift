@@ -851,10 +851,37 @@ def render_research_page():
                 drawVectorSpace();
                 updateLSTMChart();
             }, 100);
+
+            // Dynamic auto-resizing script for Streamlit iframe
+            function resizeIframe() {
+                try {
+                    if (window.frameElement) {
+                        const newHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+                        window.frameElement.style.height = (newHeight + 15) + 'px';
+                    }
+                } catch (e) {
+                    console.error("Failed to resize iframe dynamically:", e);
+                }
+            }
+
+            // Set up ResizeObserver to watch body height changes
+            if (window.ResizeObserver) {
+                const observer = new ResizeObserver(() => {
+                    resizeIframe();
+                });
+                observer.observe(document.body);
+            }
+
+            // Fallback bindings
+            window.addEventListener('load', () => {
+                setTimeout(resizeIframe, 150);
+                setTimeout(resizeIframe, 500);
+            });
+            window.addEventListener('resize', resizeIframe);
         </script>
     """
     import streamlit.components.v1 as components
-    components.html(html_content, height=4000, scrolling=False)
+    components.html(html_content, height=1800, scrolling=False)
 
 def render_feedback_page():
     st.html("""
