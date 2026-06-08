@@ -178,6 +178,29 @@ def render_research_page():
             #vram-fill {
                 transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
             }
+            
+            /* App Footer inside iframe */
+            .footer {
+                text-align: center;
+                padding: 40px 0 20px 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.06);
+                margin-top: 60px;
+                font-size: 0.85rem;
+                color: #4b5563;
+            }
+            .feedback-link {
+                color: #00f2fe;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+            .feedback-link:hover {
+                color: #ffffff;
+                background: rgba(0, 242, 254, 0.15);
+                text-decoration: none;
+            }
         </style>
 
         <div class="glass-container paper-layout" style="padding: 40px; max-width: 100%; box-sizing: border-box; margin: 0 auto;">
@@ -374,6 +397,12 @@ def render_research_page():
                 <a href="https://github.com/avacado-a/M-PULSE" target="_blank" class="sim-btn" style="text-decoration: none; padding: 12px 28px; font-size: 1rem;">
                     Explore M-PULSE on GitHub
                 </a>
+            </div>
+
+            <!-- App Footer inside iframe to prevent overlap -->
+            <div class="footer">
+                BlueShift Dashboard &copy; 2026. Made with &hearts; for Sidh Parikh's M-PULSE research. <br>
+                We value your input! Help us improve by visiting the <a class="feedback-link" href="?page=feedback" target="_parent">Feedback Hub</a>.
             </div>
         </div>
 
@@ -992,12 +1021,6 @@ if current_page == "dashboard":
 
 if current_page == "paper":
     render_research_page()
-    st.html("""
-        <div class="footer">
-            BlueShift Dashboard &copy; 2026. Made with ❤️ for Sidh Parikh's M-PULSE research. <br>
-            We value your input! Help us improve by visiting the <a class="feedback-link" href="?page=feedback" target="_self">Feedback Hub</a>.
-        </div>
-    """)
     st.stop()
 
 if current_page == "feedback":
