@@ -54,6 +54,8 @@ gdeltdoc.GdeltDoc.article_search = patched_article_search
 
 # Global threading DB lock to serialize database writes/reads and PyTorch training
 db_lock = threading.RLock()
+# Global lock to serialize GDELT API requests and prevent concurrent rate limiting
+gdelt_lock = threading.Lock()
 
 # Set up logging
 logging.basicConfig(
@@ -183,10 +185,12 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
 
     df = None
     try:
-        logger.info(f"Sending GDELT request for '{query_keyword}'...")
-        # Always sleep 5s between requests to be safe
-        time.sleep(5)
-        df = gd.article_search(filters)
+        logger.info(f"[{query_keyword}] Waiting for GDELT lock to query API...")
+        with gdelt_lock:
+            logger.info(f"[{query_keyword}] GDELT lock acquired. Sleeping 5s to throttle requests...")
+            time.sleep(5)
+            logger.info(f"[{query_keyword}] Sending GDELT request...")
+            df = gd.article_search(filters)
     except Exception as e:
         logger.error(f"GDELT query failed for '{query_keyword}': {e}", exc_info=True)
 

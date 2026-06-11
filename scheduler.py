@@ -6,8 +6,20 @@ from datetime import datetime, timedelta
 
 def run_update_queue():
     script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "backend", "update_queue.py"))
-    python_path = sys.executable
-    print(f"[{datetime.now()}] Starting update queue...")
+    
+    # Detect if a local virtual environment python interpreter exists
+    venv_dir = os.path.join(os.path.dirname(__file__), "venv")
+    if sys.platform == "win32":
+        venv_python = os.path.join(venv_dir, "Scripts", "python.exe")
+    else:
+        venv_python = os.path.join(venv_dir, "bin", "python")
+        
+    if os.path.exists(venv_python):
+        python_path = venv_python
+    else:
+        python_path = sys.executable
+        
+    print(f"[{datetime.now()}] Starting update queue with python: {python_path}...")
     
     # Run the update queue process directly and wait for it
     subprocess.run([python_path, script_path])
