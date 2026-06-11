@@ -41,4 +41,4 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-components.iframe("zhw5mkzdt9bu.shares.zrok.io", height=1000)
+components.iframe("https://zhw5mkzdt9bu.shares.zrok.io", height=1000)
