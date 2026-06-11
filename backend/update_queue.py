@@ -33,7 +33,11 @@ import gdeltdoc
 # Apply GDELT article_search monkey-patch immediately
 original_search = gdeltdoc.GdeltDoc.article_search
 
+# Global timestamp to track the last time a GDELT rate limit error occurred
+last_rate_limit_time = 0.0
+
 def patched_article_search(self, filters):
+    global last_rate_limit_time
     retries = 60
     while retries > 0:
         try:
@@ -44,6 +48,7 @@ def patched_article_search(self, filters):
             if 'ratelimit' in err_name or 'ratelimit' in err_msg or 'max retries' in err_msg or 'connection' in err_msg:
                 query_term = filters.query_params[0].strip() if getattr(filters, 'query_params', None) else 'unknown'
                 print(f"[GDELT PATCH] [{query_term}] Rate limit/connection issue hit: {err_name}. Sleeping 65 seconds before retry (retries left: {retries-1})...", flush=True)
+                last_rate_limit_time = time.time()
                 time.sleep(65)
                 retries -= 1
             else:
@@ -159,18 +164,36 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
     requests.get = patched_get
     start_date = today - timedelta(days=days)
 
-    # Sanitize query: replace punctuation with spaces, remove non-alphanumeric characters, and filter out short words (< 3 chars)
+    # Sanitize query: replace punctuation with spaces, remove non-alphanumeric characters, and filter out common stop words
     import re
     import unicodedata
+    
+    STOP_WORDS = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'if', 'then', 'else', 'when', 'at', 'by', 'for', 'from',
+        'in', 'into', 'of', 'off', 'on', 'onto', 'out', 'over', 'to', 'up', 'with', 'about', 'against',
+        'between', 'during', 'before', 'after', 'above', 'below', 'under', 'again', 'further', 'once',
+        'here', 'there', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other',
+        'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can',
+        'will', 'just', 'should', 'now', 'is', 'was', 'were', 'am', 'are', 'be', 'been', 'being', 'have',
+        'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'i', 'me', 'my', 'myself', 'we', 'our',
+        'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his',
+        'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their',
+        'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those'
+    }
+    
     sanitized = unicodedata.normalize('NFKD', topic).encode('ascii', 'ignore').decode('ascii')
     # Replace punctuation with space to prevent words from merging (e.g. U.S. -> U S)
     cleaned_query = re.sub(r'[^\w\s]', ' ', sanitized)
     words = cleaned_query.split()
-    # GDELT requires keywords to be at least 3 characters long
-    filtered_words = [w for w in words if len(w) >= 3]
-    # Enforce maximum of 3 keywords to avoid over-restrictive queries
+    
+    # Filter out stop words and keep non-stop words (allowing short meaningful terms like 24, AI, EU, Game)
+    filtered_words = [w for w in words if len(w) >= 2 and w.lower() not in STOP_WORDS]
+    if not filtered_words:
+        filtered_words = [w for w in words if len(w) >= 2][:3]
+    # Enforce maximum of 3 keywords to avoid over-restrictive GDELT queries
     filtered_words = filtered_words[:3]
     query_keyword = ' '.join(filtered_words)
+    
     logger.info(f"Sanitized GDELT query from '{topic}' to '{query_keyword}'")
     if not query_keyword or not query_keyword.strip():
         logger.warning(f"Sanitized query for '{topic}' is empty. Skipping GDELT request.")
@@ -187,8 +210,17 @@ def fetch_macro_articles_gdelt(topic: str, max_articles: int = 150, days: int = 
     try:
         logger.info(f"[{query_keyword}] Waiting for GDELT lock to query API...")
         with gdelt_lock:
-            logger.info(f"[{query_keyword}] GDELT lock acquired. Sleeping 5s to throttle requests...")
-            time.sleep(5)
+            # Check if we need to cool down from a recent rate limit error to prevent cascade blocking
+            global last_rate_limit_time
+            now = time.time()
+            elapsed_since_rate_limit = now - last_rate_limit_time
+            if elapsed_since_rate_limit < 90.0:
+                cooldown_sleep = 90.0 - elapsed_since_rate_limit
+                logger.info(f"[{query_keyword}] Recent GDELT rate limit detected. Global cool-down active: sleeping for {cooldown_sleep:.1f}s...")
+                time.sleep(cooldown_sleep)
+                
+            logger.info(f"[{query_keyword}] GDELT lock acquired. Sleeping 12s to throttle requests...")
+            time.sleep(12)
             logger.info(f"[{query_keyword}] Sending GDELT request...")
             df = gd.article_search(filters)
     except Exception as e:
